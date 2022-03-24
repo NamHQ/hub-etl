@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EtlDef xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="1" FlushBatch="4">
+	<Extraction LayoutStartOffset="3">
+		<Comments />
+		<Layout Direction="Column" StartOffset="0" MaxStart="0" EndOffset="1" Require="false" Repeat="true">
+			<Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" Require="false" DataField="F1" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" Require="false" DataField="F2" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" Require="false" DataField="F3" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" Require="false" DataField="F4" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" EndOffset="0" Require="false" DataField="F5" Repeat="false" />
+		</Layout>
+	</Extraction>
+	<Transformation>
+		<Fields />
+		<Massage />
+	</Transformation>
+	<Loaders>
+		<!--<Csv />-->
+	</Loaders>
+</EtlDef>

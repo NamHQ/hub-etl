@@ -1,0 +1,28 @@
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+**/nupkg/
+
+# Visual Studio Code
+**/.vscode
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+**/bin/
+**/obj/
+
+**/.vs/
+**/.report
+**/.dist
+**/dist
+**/node_modules
+**/package-lock.json
+
+/data/*.result
