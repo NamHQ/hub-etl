@@ -5,11 +5,11 @@ namespace Etl.Core.Transformation
 {
     public class TransformException : Exception
     {
-        public readonly FieldBase Field;
+        public readonly object RawData;
 
-        public TransformException(FieldBase field, string message) : base(message)
+        public TransformException(string message, object data) : base(message)
         {
-            this.Field = field;
+            RawData = data;
         }
     }
 }

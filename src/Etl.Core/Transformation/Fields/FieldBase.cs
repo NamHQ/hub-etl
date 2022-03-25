@@ -26,8 +26,6 @@ namespace Etl.Core.Transformation.Fields
 
         public abstract object GetValue(IDictionary<string, object> record, Context context);
 
-        protected TransformException NewException(string message, object propValue, object value)
-            => new(this, $"Invalid {message}, Type:'{GetType().Name}', Condition:{propValue}, Value:'{value ?? "NULL"}'");
     }
 
     public abstract class FieldBase<T> : FieldBase
@@ -44,7 +42,7 @@ namespace Etl.Core.Transformation.Fields
             var value = Convert(text, context);
 
             if (Require && value == null)
-                throw NewException(nameof(Require), Require, text);
+                throw new Exception("required");
 
             Validate(value, record, context);
 

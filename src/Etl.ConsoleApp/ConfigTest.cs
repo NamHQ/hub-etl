@@ -486,22 +486,26 @@ namespace Etl.ConsoleApp
             return new EtlDef
             {
                 ScanBatch = 1,
-                FlushBatch = 4,
+                FlushBatch = 2,
                 Extraction =
                 {
                     LayoutStartOffset = 3 ,
                     Layout = new LayoutDef  { EndOffset =1, Repeat=true, Direction=LayoutDirection.Column, Children= {
                         new LayoutDef{End=@"\|", DataField="F1"},
-                        //new LayoutDef{Start=@"\|",StartOffset=1, End=@"\|", DataField="F2"},
-                        //new LayoutDef{Start=@"\|",StartOffset=1, End=@"\|", DataField="F3"},
-                        //new LayoutDef{Start=@"\|",StartOffset=1, End=@"\|", DataField="F4"},
-                        //new LayoutDef{Start=@"\|",StartOffset=1, DataField="F5"}
                         new LayoutDef{StartOffset=1, End=@"\|", DataField="F2"},
                         new LayoutDef{StartOffset=1, End=@"\|", DataField="F3"},
                         new LayoutDef{StartOffset=1, End=@"\|", DataField="F4"},
                         new LayoutDef{StartOffset=1, DataField="F5"}
                     } }
+                },
+                Transformation =
+                {
+                    Fields =
+                    {
+                        new IntegerField { Field="F3"}
+                    }
                 }
+
             };
         }
     }

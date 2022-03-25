@@ -74,14 +74,14 @@ namespace Etl.ConsoleApp
             var dataFoler = "../../../../../Data";
 
             //args.Config = ConfigTest.CreateCD028();
-            //args.Config = ConfigTest.CreateDelimiterDemoConfig();
+            args.Config = ConfigTest.CreateDelimiterDemoConfig();
             //EtlDefManager.Save(args.Config, $"{dataFoler}/Data/Delimiter-demo.xml", appSetting);
             arguments = new string[] {
                 //$"{dataFoler}/FDC_CRVD3071_CD028_2111161907",
                 //"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",
 
                 $"{dataFoler}/Delimiter-demo",
-                $"-config={dataFoler}/Delimiter-demo.xml",
+                //$"-config={dataFoler}/Delimiter-demo.xml",
 
                 //"-hash=D:/DLL/HashSaltKeys/salt.xml",
                 //"-cryptor=D:/DLL/keys.xml",

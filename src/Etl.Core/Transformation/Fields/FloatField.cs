@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
@@ -19,17 +20,17 @@ namespace Etl.Core.Transformation.Fields
             }
             catch
             {
-                throw NewException("Value", "Value", text);
+                throw new TransformException($"Invalid Value", text);
             }
         }
 
         protected override void Validate(double? value, IDictionary<string, object> record, Context context)
         {
-            if (Min != int.MinValue && value < Min)
-                throw NewException(nameof(Min), Min, value);
+            if (Min != double.MinValue && value < Min)
+                throw new TransformException($"Invalid {nameof(Min)}", value);
 
-            if (Max != int.MaxValue && value > Max)
-                throw NewException(nameof(Max), Max, value);
+            if (Max != double.MaxValue && value > Max)
+                throw new TransformException($"Invalid {nameof(Max)}", value);
         }
     }
 }

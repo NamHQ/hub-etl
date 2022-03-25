@@ -9,7 +9,7 @@ namespace Etl.Core.Transformation.Fields
     {
         //[^0-9A-Za-z\s,;.'":<>?~½+-_=!@#$%^&*(){}[\]\\\/]+
         private static readonly Regex _blackListChars = new("[^0-9A-Za-z\\s,;.'\":<>?~½+-_=!@#$%^&*(){}[\\]\\\\\\/]+", RegexOptions.Compiled);
-        private readonly Lazy<Regex> _validatePattern;
+        private readonly Lazy<Regex> _regexPattern;
 
         [XmlAttribute]
         public int MaxLength { get; set; } = int.MaxValue;
@@ -18,11 +18,11 @@ namespace Etl.Core.Transformation.Fields
         public int MinLength { get; set; } = 0;
 
         [XmlAttribute]
-        public string Validation { get; set; }
+        public string Pattern { get; set; }
 
         public StringField()
         {
-            _validatePattern = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(Validation) ? null : new Regex(Validation));
+            _regexPattern = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(Pattern) ? null : new Regex(Pattern));
         }
 
         protected override string Convert(string text, Context context)
@@ -30,10 +30,10 @@ namespace Etl.Core.Transformation.Fields
             if (string.IsNullOrWhiteSpace(text))
                 return null;
 
-            if (_validatePattern.Value != null)
+            if (_regexPattern.Value != null)
             {
-                if (!_validatePattern.Value.IsMatch(text))
-                    throw NewException(nameof(Validation), Validation, text);
+                if (!_regexPattern.Value.IsMatch(text))
+                    throw new TransformException($"Invalid {nameof(Pattern)}", text);
                 return text;
             }
 
@@ -43,10 +43,10 @@ namespace Etl.Core.Transformation.Fields
         protected override void Validate(string value, IDictionary<string, object> record, Context context)
         {
             if (MinLength > 0 && (value == null || value.Length < MinLength))
-                throw NewException(nameof(MinLength), MinLength, value);
+                throw new TransformException($"Invalid {nameof(MinLength)}", value);
 
             if (MaxLength != int.MaxValue && (value == null || value.Length > MaxLength))
-                throw NewException(nameof(MaxLength), MaxLength, value);
+                throw new TransformException($"Invalid {nameof(MaxLength)}", value);
         }
     }
 }

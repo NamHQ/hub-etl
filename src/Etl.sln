@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Etl.Core", "Etl.Core\Etl.Co
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{F82CE938-515B-49EE-9AC4-590902BFD5C7}"
 	ProjectSection(SolutionItems) = preProject
-		Data\Delimiter-demo = Data\Delimiter-demo
-		Data\Delimiter-demo.xml = Data\Delimiter-demo.xml
-		..\..\..\Data\Parser\FDC_CRVD3071_CD028_2111161907.xml = ..\..\..\Data\Parser\FDC_CRVD3071_CD028_2111161907.xml
+		..\data\Delimiter-demo = ..\data\Delimiter-demo
+		..\data\Delimiter-demo.result = ..\data\Delimiter-demo.result
+		..\data\Delimiter-demo.xml = ..\data\Delimiter-demo.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Etl.Storage", "Etl.Storage\Etl.Storage.csproj", "{1EDA39F1-4C4F-423B-941B-F44EE4F139B4}"

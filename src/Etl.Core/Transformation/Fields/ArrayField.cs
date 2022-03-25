@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
@@ -13,9 +14,10 @@ namespace Etl.Core.Transformation.Fields
             if (!record.ContainsKey(LazyParserField.Value))
                 return null;
 
+            if (record[LazyParserField.Value] is not List<IDictionary<string, object>>)
+                throw new Exception($"Expected {typeof(List<IDictionary<string, object>>).Name} instead of {record[LazyParserField.Value]?.GetType().Name}");
+            
             var nestedRecords = record[LazyParserField.Value] as List<IDictionary<string, object>>;
-            if (nestedRecords == null)
-                throw new TransformException(this, $"Expected Array instead of {nestedRecords?.GetType().Name}");
 
             var result = new List<IDictionary<string, object>>();
             foreach (var nextRecord in nestedRecords)
