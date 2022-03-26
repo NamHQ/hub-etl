@@ -13,7 +13,6 @@ namespace Etl.ConsoleApp
             public Context Context;
             public int? Take;
             public int? Skip;
-            public bool OnStart;
             public bool OnScanned;
             public bool OnExtracting;
             public bool OnExtracted;

@@ -12,9 +12,6 @@ namespace Etl.Core.Events
     {
         public static void ApplyLog(CompilerEvent events, ILogWriter writer, LogOptions options)
         {
-            if (options.OnStart)
-                events.OnStart = e => OnStart(writer.Debug, e);
-
             if (options.OnScanned)
                 events.OnScanned = e => OnScanned(writer.Debug, e);
 
@@ -105,17 +102,17 @@ namespace Etl.Core.Events
         }
 
         public static void OnExtracted(Action<string> writer, IDictionary<string, object> record)
-            => writer(BuildMessage("\nPARSE RESULT:\n____________\n", record));
+            => writer(BuildMessage("\nEXTRACT RESULT:\n____________\n", record));
 
-        public static void OnTransformed(Action<string> writer, object result)
+        public static void OnTransformed(Action<string> writer, TransformResult result)
         {
-            if (result is IDictionary<string, object> one)
-                writer(BuildMessage("\nGENERATE RESULT:\n________________\n", one));
-            else if (result is List<IDictionary<string, object>> many)
-            {
-                foreach (var e in many)
-                    writer(BuildMessage("---------------\n", e));
-            }
+            writer("\nTRANSFORM RESULT:");
+            foreach (var e in result.Items)
+                writer(BuildMessage("---------------\n", e));
+
+            if (result.Errors != null)
+                foreach(var e in result.Errors)
+                    writer($"---------------\n{e}");
         }
 
         public static void OnTransformedBatch(Action<string> writer, BatchResult result)

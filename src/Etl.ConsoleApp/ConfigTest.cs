@@ -502,7 +502,7 @@ namespace Etl.ConsoleApp
                 {
                     Fields =
                     {
-                        new IntegerField { Field="F3"}
+                        new IntegerField { Field="F3", Require=true}
                     }
                 }
 

@@ -23,9 +23,8 @@ namespace Etl.Core
         private readonly List<Loader> _loaders = new();
 
         private ICompilerEvent _events;
-        private List<IDictionary<string, object>> _flushBuffer = new();
+        private TransformResult _flushBuffer;
 
-        private int _totalScannedRecords;
         private int _totalRecords;
         private int _totalValidRecords;
         private int _totalErrors;
@@ -38,24 +37,33 @@ namespace Etl.Core
             _getStreamReader = getStreamReader ?? (() => new StreamReader(dataFile));
             _scanBatch = etlDef.ScanBatch;
             _flushBatch = etlDef.FlushBatch;
-            _flushBuffer = new List<IDictionary<string, object>>(etlDef.FlushBatch);
+            _flushBuffer = new TransformResult(etlDef.FlushBatch);
             _compiler = etlDef.GetCompiler();
             _loaders = etlDef.Loaders ?? new();
 
             bool isFirst = true;
-            _sequenceFlushBuffer = new SequenceFlushBuffer(result =>
+            _sequenceFlushBuffer = new SequenceFlushBuffer((result, isLast) =>
             {
-                _compiler.ApplyMassage(result);
-                result.TotalValidRecords = _totalValidRecords += result.Batch.Count;
-
                 if (isFirst)
                 {
-                    _loaders.ForEach(e => e.Initialize(appSetting, dataFile, _compiler.AllFields));
                     isFirst = false;
+                    _loaders.ForEach(e => e.Initialize(appSetting, dataFile, _compiler.AllFields));
                 }
 
-                _loaders.ForEach(e => e.ProcessBatch(result));
-                _events?.OnTransformedBatch?.Invoke(result);
+                var batch = _compiler.ApplyMassage(result.Items);
+                var batchResult = new BatchResult
+                {
+                    Batch = batch,
+                    Errors = result.Errors,
+                    TotalValidRecords = _totalValidRecords += batch.Count,
+                    TotalErrors = _totalErrors += result.TotalErrors,
+                    TotalRecords = _totalRecords += result.TotalRecords,
+                    StartAt = _start,
+                    IsLast = isLast
+                };
+
+                _loaders.ForEach(e => e.ProcessBatch(batchResult));
+                _events?.OnTransformedBatch?.Invoke(batchResult);
             });
         }
 
@@ -107,17 +115,14 @@ namespace Etl.Core
 
         private void Compile(Context context, List<List<TextLine>> scannedBatch, bool isLast)
         {
-            var records = new List<IDictionary<string, object>>();
+            var batch = new TransformResult();
 
             foreach (var textLines in scannedBatch)
             {
-                Interlocked.Increment(ref _totalScannedRecords);
-                var recordOrder = _totalScannedRecords;
                 try
                 {
                     _compiler.RemoveComments(textLines);
 
-                    _events?.OnStart?.Invoke(recordOrder);
                     _events?.OnScanned?.Invoke(textLines);
 
                     var record = _compiler.Extract(textLines, _events);
@@ -126,42 +131,27 @@ namespace Etl.Core
                     var result = _compiler.Transform(record, context);
                     _events?.OnTransformed?.Invoke(result);
 
-                    if (result is List<IDictionary<string, object>> many)
-                        records.AddRange(many);
-                    else if (result is IDictionary<string, object> one)
-                        records.Add(one);
+                    batch.Append(result);
                 }
                 catch (Exception ex)
                 {
-                    Interlocked.Increment(ref _totalErrors);
-                    _events?.OnError?.Invoke($"Scanned Record: {recordOrder}\n", ex);
+                    _events?.OnError?.Invoke($"{textLines}\n", ex);
                 }
             }
 
-            List<IDictionary<string, object>> temp = null;
+            TransformResult temp = null;
             lock (this)
             {
-                _flushBuffer.AddRange(records);
-                if (isLast || _flushBuffer.Count >= _flushBatch)
+                _flushBuffer.Append(batch);
+                if (isLast || _flushBuffer.Items.Count >= _flushBatch)
                 {
                     temp = _flushBuffer;
-                    _totalRecords += temp.Count;
-                    _flushBuffer = new List<IDictionary<string, object>>(_flushBatch);
+                    _flushBuffer = new TransformResult(_flushBatch);
                 }
             }
 
             if (temp != null)
-            {
-                _sequenceFlushBuffer.Push(new BatchResult
-                {
-                    Batch = temp,
-                    StartAt = _start,
-                    TotalScannedRecords = _totalScannedRecords,
-                    TotalRecords = _totalRecords,
-                    TotalErrors = _totalErrors,
-                    IsLast = isLast
-                });
-            }
+                _sequenceFlushBuffer.Push(temp, isLast);
         }
 
         private void PushCompilerPool(List<Task> parserTasks, Action action)

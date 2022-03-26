@@ -2,8 +2,6 @@
 {
     public class LogOptions
     {
-        public bool OnStart { get; set; } 
-
         public bool OnScanned { get; set; }
 
         public bool OnExtracting { get; set; }

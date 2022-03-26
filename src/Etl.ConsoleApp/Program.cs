@@ -28,8 +28,7 @@ namespace Etl.ConsoleApp
                 Console.WriteLine($"\n============================ START {start} ================================");
 
                 new Workflow(appSetting, args.Config, args.DataFile.FullName)
-                     .Subcribe(events => events.ApplyLog(dataFileNoExtension,
-                        onStart: args.OnStart,
+                     .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
@@ -85,9 +84,8 @@ namespace Etl.ConsoleApp
 
                 //"-hash=D:/DLL/HashSaltKeys/salt.xml",
                 //"-cryptor=D:/DLL/keys.xml",
-                //"-skip=2",
+                //"-skip=1",
                 //"-take=1",
-                //"-onStart",
                 //"-onScanned",
                 //"-onExtracting",
                 //"-onExtracted",
@@ -107,7 +105,6 @@ namespace Etl.ConsoleApp
                 Console.WriteLine("     -cryptor=(key.xml),");
                 Console.WriteLine("     -take=(number)");
                 Console.WriteLine("     -skip=(number)");
-                Console.WriteLine("     -onStart");
                 Console.WriteLine("     -onScanned");
                 Console.WriteLine("     -onExtracting");
                 Console.WriteLine("     -onExtracted");
@@ -136,7 +133,6 @@ namespace Etl.ConsoleApp
                         || SetConfig(e, "-cryptor", val => cryptorFilePath = val)
                         || SetConfig(e, "-take", val => args.Take = int.Parse(val))
                         || SetConfig(e, "-skip", val => args.Skip = int.Parse(val))
-                        || SetConfig(e, "-onStart", _ => args.OnStart = true)
                         || SetConfig(e, "-onScanned", _ => args.OnScanned = true)
                         || SetConfig(e, "-onExtracting", _ => args.OnExtracting = true)
                         || SetConfig(e, "-onExtracted", _ => args.OnExtracted = true)

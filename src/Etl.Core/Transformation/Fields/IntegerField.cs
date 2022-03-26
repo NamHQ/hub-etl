@@ -19,17 +19,17 @@ namespace Etl.Core.Transformation.Fields
             }
             catch
             {
-                throw new TransformException($"Invalid Value", text);
+                throw new TransformException(this, "Value", text);
             }
         }
 
         protected override void Validate(int? value, IDictionary<string, object> record, Context context)
         {
             if (Min != int.MinValue && value < Min)
-                throw new TransformException($"Invalid {nameof(Min)}", value);
+                throw new TransformException(this, nameof(Min), value);
 
             if (Max != int.MaxValue && value > Max)
-                throw new TransformException($"Invalid {nameof(Max)}", value);
+                throw new TransformException(this, nameof(Max), value);
         }
     }
 }

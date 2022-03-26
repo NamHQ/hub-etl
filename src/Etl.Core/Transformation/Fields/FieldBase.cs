@@ -42,7 +42,7 @@ namespace Etl.Core.Transformation.Fields
             var value = Convert(text, context);
 
             if (Require && value == null)
-                throw new Exception("required");
+                throw new TransformException(this, "Required", value);
 
             Validate(value, record, context);
 

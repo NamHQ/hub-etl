@@ -5,11 +5,18 @@ namespace Etl.Core.Transformation
 {
     public class TransformException : Exception
     {
-        public readonly object RawData;
+        private readonly FieldBase _field;
+        public readonly object _rawData;
 
-        public TransformException(string message, object data) : base(message)
+        public TransformException(FieldBase field, string reason, object data) : base(reason)
         {
-            RawData = data;
+            _field = field;
+            _rawData = data;
+        }
+
+        public override string ToString()
+        {
+            return $"{_field.GetType().Name}:'{_field.LazyDbField.Value}', Invalid: '{Message}', Data: '{_rawData??"NULL"}'";
         }
     }
 }

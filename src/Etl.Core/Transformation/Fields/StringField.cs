@@ -33,7 +33,7 @@ namespace Etl.Core.Transformation.Fields
             if (_regexPattern.Value != null)
             {
                 if (!_regexPattern.Value.IsMatch(text))
-                    throw new TransformException($"Invalid {nameof(Pattern)}", text);
+                    throw new TransformException(this, nameof(Pattern), text);
                 return text;
             }
 
@@ -43,10 +43,10 @@ namespace Etl.Core.Transformation.Fields
         protected override void Validate(string value, IDictionary<string, object> record, Context context)
         {
             if (MinLength > 0 && (value == null || value.Length < MinLength))
-                throw new TransformException($"Invalid {nameof(MinLength)}", value);
+                throw new TransformException(this, nameof(MinLength), value);
 
             if (MaxLength != int.MaxValue && (value == null || value.Length > MaxLength))
-                throw new TransformException($"Invalid {nameof(MaxLength)}", value);
+                throw new TransformException(this, nameof(MaxLength), value);
         }
     }
 }

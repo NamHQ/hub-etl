@@ -28,8 +28,8 @@ namespace Etl.Core.Transformation
             MakeSureMergeParserFields(_collectionField, layout);
         }
 
-        public object ExtractFields(IDictionary<string, object> record, Context context)
-            => _collectionField.GetValue(record, context);
+        public TransformResult ExtractFields(IDictionary<string, object> record, Context context)
+            => _collectionField.GetValue(record, context) as TransformResult;
 
         public Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> CreateTranformInstance()
         {

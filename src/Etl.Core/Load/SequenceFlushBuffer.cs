@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Etl.Core.Transformation;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,27 +7,24 @@ namespace Etl.Core.Load
 {
     public class SequenceFlushBuffer
     {
-        private readonly Queue<BatchResult> _buffer = new();
-        private readonly Action<BatchResult> _flushHandler;
+        private readonly Queue<(TransformResult result, bool isLast)> _buffer = new();
+        private readonly Action<TransformResult, bool> _flushHandler;
         private bool _isProcessing = false;
         private Task _executor;
 
         public int Count
             => _buffer.Count;
 
-        public SequenceFlushBuffer(Action<BatchResult> flushHandler)
+        public SequenceFlushBuffer(Action<TransformResult, bool> flushHandler)
         {
             _flushHandler = flushHandler;
         }
 
-        public void Push(BatchResult parseResult)
+        public void Push(TransformResult result, bool isLast)
         {
-            if (!parseResult.IsLast && (parseResult.Batch == null || parseResult.Batch.Count == 0))
-                return;
-
             lock (this)
             {
-                _buffer.Enqueue(parseResult);
+                _buffer.Enqueue((result, isLast));
                 if (_isProcessing)
                     return;
 
@@ -38,7 +36,7 @@ namespace Etl.Core.Load
 
         private void Flush()
         {
-            BatchResult item = default;
+            (TransformResult result, bool isLast) item = default;
             while (true)
             {
                 lock (this)
@@ -52,7 +50,7 @@ namespace Etl.Core.Load
                     item = _buffer.Dequeue();
                 }
 
-                _flushHandler(item);
+                _flushHandler(item.result, item.isLast);
             }
         }
 

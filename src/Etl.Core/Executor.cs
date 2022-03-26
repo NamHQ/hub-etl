@@ -69,15 +69,10 @@ namespace Etl.Core
         public IDictionary<string, object> Extract(List<TextLine> textLines, ICompilerEvent events)
             => _extractor.Parse(textLines, events);
 
-        public object Transform(IDictionary<string, object> record, Context context)
+        public TransformResult Transform(IDictionary<string, object> record, Context context)
             => _transformer.ExtractFields(record, context);
 
-        public void ApplyMassage(BatchResult result)
-        {
-            if (_massageInstance != null)
-                result.Batch = _massageInstance(result.Batch);
-
-            result.TotalValidRecords += result.Batch.Count;
-        }
+        public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
+            => _massageInstance == null ? batch : _massageInstance(batch);
     }
 }
