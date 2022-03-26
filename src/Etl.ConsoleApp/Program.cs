@@ -88,7 +88,7 @@ namespace Etl.ConsoleApp
                 //"-onScanned",
                 //"-onExtracting",
                 //"-onExtracted",
-                "-onTransformed",
+                //"-onTransformed",
                 "-onTransformedBatch"
             };
 

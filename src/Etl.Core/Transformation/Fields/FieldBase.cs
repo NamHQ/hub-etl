@@ -68,9 +68,10 @@ namespace Etl.Core.Transformation.Fields
 
         protected Exception Stop(ExtractedResult extractedResult, string reason)
             => new(
-            $"{extractedResult.Position}," +
-            $" {GetType().Name}:'{LazyDbField.Value}'," +
-            $" Invalid: '{reason}', " +
-            $" Data: '{extractedResult?.Value ?? "NULL"}'");
+                $" Invalid: '{reason}', " +
+                $" {GetType().Name}:'{LazyDbField.Value}'," +
+                $" Data: '{extractedResult?.Value ?? "NULL"}'," +
+                $" {extractedResult.Position}," +
+                $" Text: {string.Join('\n', extractedResult.Lines)}");
     }
 }

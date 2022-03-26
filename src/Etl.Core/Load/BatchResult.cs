@@ -24,7 +24,7 @@ namespace Etl.Core.Load
             {
                 sb.AppendLine();
                 foreach (var e in Errors)
-                    sb.AppendLine($"\t{e}");
+                    sb.AppendLine(e);
             }
 
             return sb.ToString();
