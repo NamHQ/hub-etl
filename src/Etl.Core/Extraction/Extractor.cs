@@ -33,7 +33,7 @@ namespace Etl.Core.Extraction
                 var lastIndex = layout.Children.Count - 1;
                 for (var i = 0; i <= lastIndex; i++)
                 {
-                    var child = layout.Children[i]; 
+                    var child = layout.Children[i];
                     isLast = i == lastIndex && (child.Children == null || child.Children.Count == 0);
                     _children.Add(new Extractor(child, layout.Direction, isLast, hierarchy + 1));
                 }
@@ -125,27 +125,27 @@ namespace Etl.Core.Extraction
 
             do
             {
-                events?.OnParsing?.Invoke(_layout, _hierarchy, block, cursor, null, null, null, null);
+                events?.OnExtracting?.Invoke(_layout, _hierarchy, block, cursor, null, null, null, null);
 
                 var record = _layout.Repeat ? new Dictionary<string, object>() : result;
 
                 var newStart = GetFromPosition(cursor, end, block);
                 if (newStart == STOP)
                 {
-                    events?.OnParsing?.Invoke(_layout, _hierarchy, block, null, null, newStart, null, null);
+                    events?.OnExtracting?.Invoke(_layout, _hierarchy, block, null, null, newStart, null, null);
                     break;
                 }
 
                 var (to, newEnd) = GetToPosition(newStart, end, block);
 
-                var value = string.Empty;
+                ExtractedResult value = default;
                 if (!_layout.Repeat && _children == null && !string.IsNullOrEmpty(_layout.DataField))
                 {
                     value = GetValue(block, newStart, to, end);
                     record[_layout.DataField] = value;
                 }
 
-                events?.OnParsing?.Invoke(_layout, _hierarchy, block, null, newStart, newEnd, _layout.DataField, value);
+                events?.OnExtracting?.Invoke(_layout, _hierarchy, block, null, newStart, newEnd, _layout.DataField, value);
 
                 var (line, column) = _children == null ? newStart : DetectChildrenLayouts(newStart, newEnd, block, events, record);
 
@@ -156,7 +156,7 @@ namespace Etl.Core.Extraction
                     Math.Max(to.row, line),
                     _parentDirection == LayoutDirection.Column ? Math.Max(to.column, column) : to.column);
 
-                events?.OnParsing?.Invoke(_layout, _hierarchy, block, null, null, cursor, null, null);
+                events?.OnExtracting?.Invoke(_layout, _hierarchy, block, null, null, cursor, null, null);
             }
             while (_layout.Repeat);
 
@@ -189,12 +189,7 @@ namespace Etl.Core.Extraction
                         row++;
 
                     if (!isMatch)
-                    {
-                        if (_layout.Require)
-                            throw new ExtractException(nameof(GetFromPosition), _parentDirection, from, (row, column), _layout, block);
-                        else
-                            return STOP;
-                    }
+                        return STOP;
                 }
 
                 row += _layout.StartOffset;
@@ -210,8 +205,6 @@ namespace Etl.Core.Extraction
 
                     if (match != null && match.Success)
                         column = match.Index;
-                    else if (_layout.Require)
-                        throw new ExtractException(nameof(GetFromPosition), _parentDirection, from, (row, column), _layout, block);
                     else
                         return STOP;
                 }
@@ -257,8 +250,6 @@ namespace Etl.Core.Extraction
 
                     if (match != null && match.Success)
                         column = match.Index;
-                    else if (_layout.Require)
-                        throw new ExtractException($"{nameof(GetToPosition)} not match { _layout.End }", _parentDirection, from, end, _layout, block);
                     else
                         return ((row, end.column), end);
                 }
@@ -269,7 +260,7 @@ namespace Etl.Core.Extraction
             return ((row, column), newEnd);
         }
 
-        private string GetValue(TextBlock block, (int row, int col) from, (int row, int col) to, (int row, int col) end)
+        private ExtractedResult GetValue(TextBlock block, (int row, int col) from, (int row, int col) to, (int row, int col) end)
         {
             if (_isLast && from == to)
             {
@@ -279,7 +270,7 @@ namespace Etl.Core.Extraction
                     to.col = end.col;
             }
 
-            return block.GetValue(from, to);
+            return new ExtractedResult(block, from, to);
         }
     }
 }

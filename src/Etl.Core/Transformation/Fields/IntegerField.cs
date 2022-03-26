@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Etl.Core.Extraction;
 using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
@@ -11,7 +11,7 @@ namespace Etl.Core.Transformation.Fields
         [XmlAttribute]
         public int Min { get; set; } = int.MinValue;
 
-        protected override int? Convert(string text, Context context)
+        protected override int? Convert(string text, ExtractedResult extractedResult, Context context)
         {
             try
             {
@@ -19,17 +19,17 @@ namespace Etl.Core.Transformation.Fields
             }
             catch
             {
-                throw new TransformException(this, "Value", text);
+                throw Stop(extractedResult, "Value");
             }
         }
 
-        protected override void Validate(int? value, IDictionary<string, object> record, Context context)
+        protected override void Validate(int? value, ExtractedResult extractedResult, Context context)
         {
             if (Min != int.MinValue && value < Min)
-                throw new TransformException(this, nameof(Min), value);
+                throw Stop(extractedResult, nameof(Min));
 
             if (Max != int.MaxValue && value > Max)
-                throw new TransformException(this, nameof(Max), value);
+                throw Stop(extractedResult, nameof(Max));
         }
     }
 }

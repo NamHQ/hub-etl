@@ -22,7 +22,6 @@ namespace Etl.Core.Scanner
         public string GetValue((int row, int col) start, (int row, int col) end)
             => GetValue(start.row, start.col, end.row, end.col);
         
-
         public string GetValue(int startRow, int startColumn, int endRow, int endColumn)
         {
             if (startRow == endRow)

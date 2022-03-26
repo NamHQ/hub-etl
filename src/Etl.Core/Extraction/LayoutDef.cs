@@ -28,9 +28,6 @@ namespace Etl.Core.Extraction
         public int EndOffset { get; set; }
 
         [XmlAttribute]
-        public bool Require { get; set; }
-
-        [XmlAttribute]
         public string DataField { get; set; }
 
         [XmlAttribute]

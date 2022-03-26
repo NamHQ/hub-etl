@@ -16,7 +16,7 @@ namespace Etl.Core.Events
                 events.OnScanned = e => OnScanned(writer.Debug, e);
 
             if (options.OnExtracting)
-                events.OnParsing = (layout, hierarchy, block, from, start, end, dataField, value) => OnParsing(writer.Debug, layout, hierarchy, block, from, start, end, dataField, value);
+                events.OnExtracting = (layout, hierarchy, block, from, start, end, dataField, value) => OnExtracting(writer.Debug, layout, hierarchy, block, from, start, end, dataField, value);
 
             if (options.OnExtracted)
                 events.OnExtracted = e => OnExtracted(writer.Debug, e);
@@ -41,13 +41,13 @@ namespace Etl.Core.Events
                     writer(e.ToString());
         }
 
-        public static void OnParsing(
+        public static void OnExtracting(
             Action<string> writer,
             LayoutDef layout,
             int hierachy,
             TextBlock block,
             (int row, int column)? start, (int row, int column)? from, (int row, int column)? to,
-            string dataField = null, string value = null)
+            string dataField = null, ExtractedResult result = null)
         {
             if (block.Count == 0)
                 return;
@@ -79,7 +79,7 @@ namespace Etl.Core.Events
                     sb.Append($", To(R.{block[Math.Min(block.Count - 1, to.Value.row)].Row},{WriteColumn(to)})");
 
                 if (!string.IsNullOrEmpty(dataField))
-                    sb.Append($" ===> Field({dataField},{value})");
+                    sb.Append($" ===> Field({dataField},{result?.Value})");
 
                 writer(sb.ToString());
             }
@@ -119,14 +119,7 @@ namespace Etl.Core.Events
             => writer($"BATCH RESULT: {result}");
 
         public static void OnError(Action<string, Exception> writer, string message, Exception exception)
-        {
-            if (exception is ExtractException)
-                writer(message, exception);
-            else if (exception is TransformException)
-                writer(message, exception);
-            else
-                writer(message, exception);
-        }
+            => writer(message, exception);
 
         public static string BuildMessage(string message, IDictionary<string, object> record)
         {

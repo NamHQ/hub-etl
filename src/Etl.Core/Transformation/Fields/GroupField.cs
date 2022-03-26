@@ -36,13 +36,13 @@ namespace Etl.Core.Transformation.Fields
             });
         }
 
-        public override object GetValue(IDictionary<string, object> record, Context context)
+        public override object Transform(IDictionary<string, object> record, Context context)
             => TranformOneParserdRecord(record, context);
 
         protected virtual TransformResult TranformOneParserdRecord(IDictionary<string, object> record, Context context)
         {
             IDictionary<string, object> newRecord = null;
-            var result = LazyFlatArray.Value?.GetValue(record, context) as TransformResult ?? new TransformResult();
+            var result = LazyFlatArray.Value?.Transform(record, context) as TransformResult ?? new TransformResult();
             if (result.Items.Count == 0)
                 result.Items.Add(newRecord = new Dictionary<string, object>());
 
@@ -53,7 +53,7 @@ namespace Etl.Core.Transformation.Fields
                     if (field == LazyFlatArray.Value)
                         continue;
 
-                    var val = field.GetValue(record, context);
+                    var val = field.Transform(record, context);
                     if (val == null)
                         continue;
 
@@ -66,7 +66,7 @@ namespace Etl.Core.Transformation.Fields
             catch (Exception ex)
             {
                 return new TransformResult { TotalErrors = Math.Max(result.TotalRecords, 1) }
-                    .AddErorr(ex is TransformException error ? error.ToString() : ex.Message);
+                    .AddErorr(ex.Message);
             }
 
             return result;

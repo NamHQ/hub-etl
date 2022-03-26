@@ -1,11 +1,12 @@
-﻿using System.Security.Cryptography;
+﻿using Etl.Core.Extraction;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Etl.Core.Transformation.Fields
 {
     public class HashField : FieldBase<string>
     {
-        protected override string Convert(string text, Context context)
+        protected override string Convert(string text, ExtractedResult extractedResult, Context context)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return null;

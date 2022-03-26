@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Etl.Core.Extraction;
+using System;
 using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
@@ -9,9 +10,9 @@ namespace Etl.Core.Transformation.Fields
         {
         }
 
-        protected override string Modify(IDictionary<string, object> record, Context context)
+        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, Context context)
         {
-            var text = base.Modify(record, context);
+            var text = base.Modify(extractedResult, record, context);
 
             if (ModifyAction == null && !string.IsNullOrWhiteSpace(text))
                 return text == "1"
@@ -21,7 +22,7 @@ namespace Etl.Core.Transformation.Fields
             return text;
         }
 
-        protected override bool? Convert(string text, Context context)
+        protected override bool? Convert(string text, ExtractedResult extractedResult, Context context)
             => string.IsNullOrEmpty(text) ? null : System.Convert.ToBoolean(text);
     }
 }

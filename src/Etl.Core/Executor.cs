@@ -5,7 +5,6 @@ using Etl.Core.Extraction;
 using Etl.Core.Transformation;
 using System.Text.RegularExpressions;
 using System;
-using Etl.Core.Load;
 using System.Linq;
 using Etl.Core.Transformation.Fields;
 using System.IO;

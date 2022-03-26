@@ -8,6 +8,6 @@ namespace Etl.Core.Transformation.Modification
     [XmlInclude(typeof(SubStringAction))]
     public abstract class ModificationActionBase
     {
-        public abstract string Execute(FieldBase field, IDictionary<string, object> record);
+        public abstract string Execute(FieldBase field, string rawValue, IDictionary<string, object> record);
     }
 }

@@ -29,31 +29,29 @@ namespace Etl.Core.Transformation.Modification
             _regexEnd = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(End) ? null : new Regex(End, RegexOptions.Compiled));
         }
 
-        public override string Execute(FieldBase field, IDictionary<string, object> record)
+        public override string Execute(FieldBase field, string rawValue, IDictionary<string, object> record)
         {
-            if (!record.TryGetValue(field.LazyParserField.Value, out object raw))
+            if (rawValue == null)
                 return null;
-
-            var text = raw as string;
 
             var start = 0;
             if (_regexStart.Value != null)
             {
-                var match = _regexStart.Value.Match(text);
+                var match = _regexStart.Value.Match(rawValue);
                 if (match.Success)
-                    start = _regexStart.Value.Match(text).Index;
+                    start = _regexStart.Value.Match(rawValue).Index;
                 else
                     return null;
             }
 
             start += StartOffset;
-            if (start >= text.Length)
+            if (start >= rawValue.Length)
                 return null;
 
             var length = 0;
             if (_regexEnd.Value != null)
             {
-                var match = start >= text.Length ? null : _regexEnd.Value.Match(text, start);
+                var match = start >= rawValue.Length ? null : _regexEnd.Value.Match(rawValue, start);
                 if (match != null && match.Success)
                     length = match.Index - start;
                 else
@@ -62,7 +60,7 @@ namespace Etl.Core.Transformation.Modification
 
             length += EndOffset;
 
-            return (_regexEnd.Value == null && length == 0) || (start + length) >= text.Length ? text[start..] : text.Substring(start, length);
+            return (_regexEnd.Value == null && length == 0) || (start + length) >= rawValue.Length ? rawValue[start..] : rawValue.Substring(start, length);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Etl.Core.Transformation.Modification
         private Func<IDictionary<string, object>, string, string> _executor;
         public string Code { get; set; }
 
-        public override string Execute(FieldBase field, IDictionary<string, object> record)
+        public override string Execute(FieldBase field, string rawValue, IDictionary<string, object> record)
         {
             if (string.IsNullOrWhiteSpace(Code))
                 throw new Exception($"{nameof(CSharpAction)} expects {nameof(Code)} not empty.");
@@ -29,11 +29,7 @@ namespace Etl.Core.Transformation.Modification
                 _executor = (record, value) => method.Invoke(instance, new object[] { record, value }) as string;
             }
 
-            var text = string.IsNullOrWhiteSpace(field.LazyParserField.Value) || !record.TryGetValue(field.LazyParserField.Value, out object raw)
-                ? null
-                : raw is string value ? value : raw?.ToString();
-
-            return _executor(record, text);
+            return _executor(record, rawValue);
         }
     }
 }

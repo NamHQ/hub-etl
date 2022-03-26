@@ -1,5 +1,4 @@
 ﻿using Etl.Core;
-using Etl.Core.Load;
 using Etl.Core.Transformation;
 using Etl.Core.Utils;
 using Etl.Storage;
@@ -89,7 +88,7 @@ namespace Etl.ConsoleApp
                 //"-onScanned",
                 //"-onExtracting",
                 //"-onExtracted",
-                //"-onTransformed",
+                "-onTransformed",
                 "-onTransformedBatch"
             };
 

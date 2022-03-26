@@ -29,7 +29,7 @@ namespace Etl.Core.Transformation
         }
 
         public TransformResult ExtractFields(IDictionary<string, object> record, Context context)
-            => _collectionField.GetValue(record, context) as TransformResult;
+            => _collectionField.Transform(record, context) as TransformResult;
 
         public Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> CreateTranformInstance()
         {

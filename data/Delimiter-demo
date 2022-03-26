@@ -3,5 +3,13 @@ header2
 =========================================
 abc||456|Test
 abc|end||
+abc||456-|continue|end
+F1|F2|F3|F4||F6
+abc||456|Test
+abc|end||
+abc||456|continue|end
+F1|F2|F3|F4||F6
+abc||456|Test
+abc|end||
 abc||456|continue|end
 F1|F2|F3|F4||F6

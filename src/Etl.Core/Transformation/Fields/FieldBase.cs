@@ -1,4 +1,5 @@
-﻿using Etl.Core.Transformation.Modification;
+﻿using Etl.Core.Extraction;
+using Etl.Core.Transformation.Modification;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
@@ -16,15 +17,15 @@ namespace Etl.Core.Transformation.Fields
         internal readonly Lazy<string> LazyParserField;
 
         [XmlAttribute]
-        public bool Require { get; set; }
+        public bool Required { get; set; }
 
         protected FieldBase()
         {
             LazyDbField = new Lazy<string>(() => string.IsNullOrWhiteSpace(Field) ? ParserField : Field);
-            LazyParserField = new Lazy<string>(() => string.IsNullOrWhiteSpace(ParserField) ? Field: ParserField);
+            LazyParserField = new Lazy<string>(() => string.IsNullOrWhiteSpace(ParserField) ? Field : ParserField);
         }
 
-        public abstract object GetValue(IDictionary<string, object> record, Context context);
+        public abstract object Transform(IDictionary<string, object> record, Context context);
 
     }
 
@@ -33,33 +34,43 @@ namespace Etl.Core.Transformation.Fields
         [XmlElement("Modify")]
         public ModificationActionBase ModifyAction { get; set; }
 
-        public override object GetValue(IDictionary<string, object> record, Context context)
+        public ExtractedResult GetExtractedResult(IDictionary<string, object> record)
+            => string.IsNullOrWhiteSpace(LazyParserField.Value) || !record.TryGetValue(LazyParserField.Value, out object value)
+                ? null
+                : value as ExtractedResult;
+
+        public override object Transform(IDictionary<string, object> record, Context context)
             => Start(record, context);
         protected virtual T Start(IDictionary<string, object> record, Context context)
         {
-            var text = Modify(record, context);
+            var extractedResult = GetExtractedResult(record);
 
-            var value = Convert(text, context);
+            var text = Modify(extractedResult, record, context);
 
-            if (Require && value == null)
-                throw new TransformException(this, "Required", value);
+            var value = Convert(text, extractedResult, context);
 
-            Validate(value, record, context);
+            if (Required && value == null)
+                throw Stop(extractedResult, "Required");
+
+            Validate(value, extractedResult, context);
 
             return value;
         }
 
-        protected virtual string Modify(IDictionary<string, object> record, Context context)
-        {
-            if (ModifyAction == null)
-            {
-                record.TryGetValue(LazyParserField.Value, out object raw);
-                return raw as string;
-            }
+        protected virtual string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, Context context)
+            => ModifyAction == null
+                ? extractedResult?.Value
+                : ModifyAction.Execute(this, extractedResult?.Value, record);
 
-            return ModifyAction.Execute(this, record);
-        }
-        protected abstract T Convert(string text, Context context);
-        protected virtual void Validate(T value, IDictionary<string, object> record, Context context) { }
+        protected abstract T Convert(string text, ExtractedResult extractedResult, Context context);
+
+        protected virtual void Validate(T value, ExtractedResult extractedResult, Context context) { }
+
+        protected Exception Stop(ExtractedResult extractedResult, string reason)
+            => new(
+            $"{extractedResult.Position}," +
+            $" {GetType().Name}:'{LazyDbField.Value}'," +
+            $" Invalid: '{reason}', " +
+            $" Data: '{extractedResult?.Value ?? "NULL"}'");
     }
 }
