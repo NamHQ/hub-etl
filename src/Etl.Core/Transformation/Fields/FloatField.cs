@@ -11,7 +11,7 @@ namespace Etl.Core.Transformation.Fields
         [XmlAttribute]
         public double Min { get; set; } = double.MinValue;
 
-        protected override double? Convert(string text,  ExtractedResult extractedResult, Context context)
+        protected override double? Convert(string text,  ExtractedResult extractedResult, IEtlContext context)
         {
             try
             {
@@ -23,7 +23,7 @@ namespace Etl.Core.Transformation.Fields
             }
         }
 
-        protected override void Validate(double? value, ExtractedResult extractedResult, Context context)
+        protected override void Validate(double? value, ExtractedResult extractedResult, IEtlContext context)
         {
             if (Min != double.MinValue && value < Min)
                 throw Stop(extractedResult, nameof(Min));

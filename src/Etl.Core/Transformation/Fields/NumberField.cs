@@ -5,7 +5,7 @@ namespace Etl.Core.Transformation.Fields
 {
     public abstract class NumberField<T> : FieldBase<T>
     {
-        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, Context context)
+        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, IEtlContext context)
         {
             var raw = base.Modify(extractedResult, record, context);
 

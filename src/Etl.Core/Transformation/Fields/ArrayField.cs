@@ -9,7 +9,7 @@ namespace Etl.Core.Transformation.Fields
         [XmlAttribute]
         public bool Flat { get; set; }
 
-        public override object Transform(IDictionary<string, object> record, Context context)
+        public override object Transform(IDictionary<string, object> record, IEtlContext context)
         {
             if (!record.ContainsKey(LazyParserField.Value))
                 return null;

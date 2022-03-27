@@ -1,6 +1,4 @@
 ﻿using Etl.Core;
-using Etl.Core.Transformation;
-using System.IO;
 
 namespace Etl.ConsoleApp
 {
@@ -8,9 +6,8 @@ namespace Etl.ConsoleApp
     {
         public class AppArgument
         {
-            public FileInfo DataFile;
-            public EtlDef Config;
-            public Context Context;
+            public string DataFile;
+            public string ConfigFile;
             public int? Take;
             public int? Skip;
             public bool OnScanned;
@@ -18,6 +15,8 @@ namespace Etl.ConsoleApp
             public bool OnExtracted;
             public bool OnTransformed;
             public bool OnTransformedBatch;
+
+            public EtlDef Config;
         }
     }
 }

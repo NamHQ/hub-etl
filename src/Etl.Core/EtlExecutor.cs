@@ -11,7 +11,7 @@ using System.IO;
 
 namespace Etl.Core
 {
-    public class Executor
+    public class EtlExecutor
     {
         private readonly Extractor _extractor;
         private readonly Transformer _transformer;
@@ -22,11 +22,9 @@ namespace Etl.Core
         private readonly List<Extractor> _layoutComments = new();
 
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _massageInstance;
-
-
         public IReadOnlyCollection<FieldBase> AllFields => _transformer.AllFields;
 
-        public Executor(EtlDef etfDef)
+        public EtlExecutor(EtlDef etfDef)
         {
             var extraction = etfDef.Extraction;
 
@@ -68,7 +66,7 @@ namespace Etl.Core
         public IDictionary<string, object> Extract(List<TextLine> textLines, ICompilerEvent events)
             => _extractor.Parse(textLines, events);
 
-        public TransformResult Transform(IDictionary<string, object> record, Context context)
+        public TransformResult Transform(IDictionary<string, object> record, IEtlContext context)
             => _transformer.ExtractFields(record, context);
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)

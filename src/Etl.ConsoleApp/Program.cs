@@ -1,12 +1,8 @@
 ﻿using Etl.Core;
-using Etl.Core.Transformation;
-using Etl.Core.Utils;
 using Etl.Storage;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.IO;
-using System.Text;
-using System.Xml;
 
 namespace Etl.ConsoleApp
 {
@@ -16,26 +12,27 @@ namespace Etl.ConsoleApp
         {
             try
             {
-                var appSetting = BuildAppSetting();
-                var args = BuildArgs(appSetting, arguments);
-                if (args.DataFile == null)
-                    return;
+                var configuration = BuildConfiguration();
+                var args = BuildArgs(configuration, arguments);
 
-                var dataFileNoExtension = $"{args.DataFile.Directory}/{Path.GetFileNameWithoutExtension(args.DataFile.Name)}";
+                Console.WriteLine($"\n============================ START {DateTime.Now} ================================");
 
-                var start = DateTime.Now;
-                Console.WriteLine($"\n============================ START {start} ================================");
+                var services = new ServiceCollection();
 
-                new Workflow(appSetting, args.Config, args.DataFile.FullName)
-                     .Subcribe(events => events.ConsoleLog(
+                services.AddEtl(configuration);
+
+                services.BuildServiceProvider()
+                   .GetRequiredService<Workflow>()
+                   .SetConfig(args.Config)
+                   .SetConfig(args.ConfigFile)      //Override args.Config
+                   .AddLoaders(new CsvLoader())
+                   .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
                         onTransformed: args.OnTransformed,
-                        onTransformedBatch: args.OnTransformedBatch)
-                        )
-                    .AddLoaders(new CsvLoader())
-                    .Start(args.Context, args.Take, args.Skip);
+                        onTransformedBatch: args.OnTransformedBatch))
+                   .Start(args.DataFile, args.Take, args.Skip);
             }
             catch (Exception ex)
             {
@@ -54,7 +51,7 @@ namespace Etl.ConsoleApp
 #endif
         }
 
-        static IConfiguration BuildAppSetting()
+        static IConfiguration BuildConfiguration()
         {
             var configBuilder = new ConfigurationBuilder();
             configBuilder.AddJsonFile("appsettings.json");
@@ -96,38 +93,18 @@ namespace Etl.ConsoleApp
             string cryptorFilePath = string.Empty;
 
             if (arguments.Length == 0)
-            {
-                Console.WriteLine(" Syntax: MPParser dataFile [-Options]");
-                Console.WriteLine(" Options:");
-                Console.WriteLine("     -config=(configFile.xml),");
-                Console.WriteLine("     -hash=(salt.xml),");
-                Console.WriteLine("     -cryptor=(key.xml),");
-                Console.WriteLine("     -take=(number)");
-                Console.WriteLine("     -skip=(number)");
-                Console.WriteLine("     -onScanned");
-                Console.WriteLine("     -onExtracting");
-                Console.WriteLine("     -onExtracted");
-                Console.WriteLine("     -onTransformed");
-                Console.WriteLine("     -onTransformedBatch");
-            }
+                PrintSyntax();
             else
                 foreach (var e in arguments)
                 {
                     if (args.DataFile == null)
                     {
-                        args.DataFile = new FileInfo(e);
-                        if (!args.DataFile.Exists)
-                            throw new Exception($"Not existed data file {e}");
+                        args.DataFile = e;
                         continue;
                     }
 
-                    var _ = 
-                        SetConfig(e, "-config", val =>
-                            {
-                                if (!File.Exists(val))
-                                    throw new Exception($"Not existed config file {val}");
-                                args.Config = EtlDefManager.Load(val, appSetting);
-                            })
+                    var _ =
+                        SetConfig(e, "-config", val => args.ConfigFile = val)
                         || SetConfig(e, "-hash", val => hashFilePath = val)
                         || SetConfig(e, "-cryptor", val => cryptorFilePath = val)
                         || SetConfig(e, "-take", val => args.Take = int.Parse(val))
@@ -139,18 +116,23 @@ namespace Etl.ConsoleApp
                         || SetConfig(e, "-onTransformedBatch", _ => args.OnTransformedBatch = true);
                 }
 
-            if (args.Config == null && args.DataFile != null)
-            {
-                var filePath = $"{args.DataFile.Directory}/{Path.GetFileNameWithoutExtension(args.DataFile.Name)}.xml";
-                if (!File.Exists(filePath))
-                    throw new Exception($"Not existed config file {filePath}");
-
-                args.Config = EtlDefManager.Load(filePath, appSetting);
-            }
-
-            args.Context = GetContext(hashFilePath, cryptorFilePath);
-
             return args;
+        }
+
+        private static void PrintSyntax()
+        {
+            Console.WriteLine(" Syntax: MPParser dataFile [-Options]");
+            Console.WriteLine(" Options:");
+            Console.WriteLine("     -config=(configFile.xml),");
+            Console.WriteLine("     -hash=(salt.xml),");
+            Console.WriteLine("     -cryptor=(key.xml),");
+            Console.WriteLine("     -take=(number)");
+            Console.WriteLine("     -skip=(number)");
+            Console.WriteLine("     -onScanned");
+            Console.WriteLine("     -onExtracting");
+            Console.WriteLine("     -onExtracted");
+            Console.WriteLine("     -onTransformed");
+            Console.WriteLine("     -onTransformedBatch");
         }
 
         private static bool SetConfig(string configValue, string key, Action<string> setValue)
@@ -167,34 +149,5 @@ namespace Etl.ConsoleApp
             return false;
         }
 
-        public static Context GetContext(string hashFilePath, string cryptorFilePath)
-        {
-            string saltString = null;
-            if (!string.IsNullOrEmpty(hashFilePath))
-            {
-                if (!File.Exists(hashFilePath))
-                    throw new Exception($"File not exist {hashFilePath}");
-
-                var doc = new XmlDocument();
-                doc.Load(hashFilePath);
-                saltString = Cryptor.Decrypt(doc.SelectSingleNode("//salts/salt").Attributes["value"].Value);
-            }
-
-            byte[] encryptorKey = null;
-            byte[] encryptorIv = null;
-            if (!string.IsNullOrEmpty(cryptorFilePath))
-            {
-                if (!File.Exists(cryptorFilePath))
-                    throw new Exception($"File not exist {cryptorFilePath}");
-                var doc = new XmlDocument();
-                doc.Load(cryptorFilePath);
-                var element = doc.SelectNodes("//keys/key")[0];
-
-                encryptorKey = Encoding.ASCII.GetBytes(Cryptor.Decrypt(element.Attributes["value"].Value));
-                encryptorIv = Encoding.ASCII.GetBytes(Cryptor.Decrypt(element.Attributes["iv"].Value));
-            }
-
-            return new Context(string.Empty, encryptorKey, encryptorIv, saltString);
-        }
     }
 }

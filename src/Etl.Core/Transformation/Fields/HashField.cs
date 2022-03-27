@@ -6,7 +6,7 @@ namespace Etl.Core.Transformation.Fields
 {
     public class HashField : FieldBase<string>
     {
-        protected override string Convert(string text, ExtractedResult extractedResult, Context context)
+        protected override string Convert(string text, ExtractedResult extractedResult, IEtlContext context)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return null;

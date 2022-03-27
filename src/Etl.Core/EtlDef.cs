@@ -19,18 +19,5 @@ namespace Etl.Core
         public TransformDef Transformation { get; set; } = new();
 
         public List<Loader> Loaders { get; set; } = new();
-
-        private Executor _compiler;
-        public Executor GetCompiler()
-        {
-            if (_compiler == null)
-                lock (this)
-                {
-                    if (_compiler == null)
-                        _compiler = new Executor(this);
-                }
-
-            return _compiler;
-        }
     }
 }

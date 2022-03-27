@@ -13,7 +13,7 @@ namespace Etl.Core.Transformation.Fields
         [XmlAttribute]
         public DateTime Min { get; set; } = DateTime.MinValue;
 
-        protected override DateTime? Convert(string text, ExtractedResult extractedResult, Context context)
+        protected override DateTime? Convert(string text, ExtractedResult extractedResult, IEtlContext context)
         {
             try
             {
@@ -25,7 +25,7 @@ namespace Etl.Core.Transformation.Fields
             }
         }
 
-        protected override void Validate(DateTime? value, ExtractedResult extractedResult, Context context)
+        protected override void Validate(DateTime? value, ExtractedResult extractedResult, IEtlContext context)
         {
             if (Min != DateTime.MinValue && value < Min)
                 throw Stop(extractedResult, nameof(Min));

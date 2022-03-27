@@ -6,65 +6,38 @@ using Etl.Core.Events;
 using Etl.Core.Transformation;
 using Etl.Core.Load;
 using Etl.Core.Scanner;
-using Microsoft.Extensions.Configuration;
 using System.IO;
+using Etl.Core.Settings;
 
 namespace Etl.Core
 {
     public class Workflow
     {
-        private readonly int _maxCompilerThread;
+        private readonly int _maxExtractorThread;
         private readonly int _maxBatchBuffer;
-        private readonly Executor _compiler;
-        private readonly Func<StreamReader> _getStreamReader;
-        private readonly SequenceFlushBuffer _sequenceFlushBuffer;
-        private readonly int _scanBatch;
-        private readonly int _flushBatch;
-        private readonly List<Loader> _loaders = new();
+        private readonly IEtlContext _context;
+        private readonly IEtlFactory _etlDefFactory;
+
+        private SequenceFlushBuffer _sequenceFlushBuffer;
+        private int _scanBatch;
+        private int _flushBatch;
+        private List<Loader> _loaders = new();
+        private EtlExecutor _executor;
 
         private ICompilerEvent _events;
-        private TransformResult _flushBuffer;
+        private TransformResult _transformResult;
 
         private int _totalRecords;
         private int _totalValidRecords;
         private int _totalErrors;
         private DateTime _start = DateTime.Now;
 
-        public Workflow(IConfiguration appSetting, EtlDef etlDef, string dataFile, Func<StreamReader> getStreamReader = null)
+        public Workflow(EtlSetting setting, IEtlContext eltContext, IEtlFactory etlDefFactory)
         {
-            _maxCompilerThread = appSetting.GetSection("Compiler:MaxThread")?.Get<int>() ?? 2;
-            _maxBatchBuffer = appSetting.GetSection("Compiler:MaxBatchBuffer")?.Get<int>() ?? 100;
-            _getStreamReader = getStreamReader ?? (() => new StreamReader(dataFile));
-            _scanBatch = etlDef.ScanBatch;
-            _flushBatch = etlDef.FlushBatch;
-            _flushBuffer = new TransformResult(etlDef.FlushBatch);
-            _compiler = etlDef.GetCompiler();
-            _loaders = etlDef.Loaders ?? new();
-
-            bool isFirst = true;
-            _sequenceFlushBuffer = new SequenceFlushBuffer((result, isLast) =>
-            {
-                if (isFirst)
-                {
-                    isFirst = false;
-                    _loaders.ForEach(e => e.Initialize(appSetting, dataFile, _compiler.AllFields));
-                }
-
-                var batch = _compiler.ApplyMassage(result.Items);
-                var batchResult = new BatchResult
-                {
-                    Batch = batch,
-                    Errors = result.Errors,
-                    TotalValidRecords = _totalValidRecords += batch.Count,
-                    TotalErrors = _totalErrors += result.TotalErrors,
-                    TotalRecords = _totalRecords += result.TotalRecords,
-                    StartAt = _start,
-                    IsLast = isLast
-                };
-
-                _loaders.ForEach(e => e.ProcessBatch(batchResult));
-                _events?.OnTransformedBatch?.Invoke(batchResult);
-            });
+            _maxExtractorThread = setting?.Extraction?.MaxThread ?? 2;
+            _maxBatchBuffer = setting?.Extraction?.MaxBatchBuffer ?? 100;
+            _context = eltContext;
+            _etlDefFactory = etlDefFactory;
         }
 
         public Workflow Subcribe(Action<CompilerEvent> subscribe)
@@ -75,6 +48,29 @@ namespace Etl.Core
             _events = e;
             return this;
         }
+        
+        public Workflow SetConfig(string configFilePath)
+        {
+            if (string.IsNullOrEmpty(configFilePath))
+                return this;
+
+            var (definition, executor) = _etlDefFactory.DirectlyLoad(configFilePath);
+            return SetConfig(definition, executor);
+        }
+
+        public Workflow SetConfig(EtlDef definition, EtlExecutor executor = null)
+        {
+            if (definition != null)
+            {
+                _scanBatch = definition.ScanBatch;
+                _flushBatch = definition.FlushBatch;
+                _loaders = definition.Loaders ?? new();
+                _transformResult = new TransformResult(definition.FlushBatch);
+                _executor = executor ?? new EtlExecutor(definition);
+            }
+
+            return this;
+        }
 
         public Workflow AddLoaders(params Loader[] loaders)
         {
@@ -82,38 +78,59 @@ namespace Etl.Core
             return this;
         }
 
-        public void Start(Context context = null, int? take = null, int? skip = null)
+        public void Start(string dataFilePath, int? take = null, int? skip = null)
         {
+            if (!File.Exists(dataFilePath))
+                throw new Exception($"Not existed data file '{dataFilePath}'.");
+
+            if (_executor == null)
+            {
+                var (definition, executor) = _etlDefFactory.Load(dataFilePath);
+                SetConfig(definition, executor);
+            }
+
+            bool isFirst = true;
+            _sequenceFlushBuffer = new SequenceFlushBuffer((result, isLast) =>
+            {
+                OnTransformed(result, isFirst, isLast, dataFilePath);
+                isFirst = false;
+            });
+
             _start = DateTime.Now;
             List<List<TextLine>> scannedBatch = new();
-            List<Task> compilerTasks = new(_maxCompilerThread);
+            List<Task> extractTasks = new(_maxExtractorThread);
 
-            using (var scanner = _compiler.CreateScanner(_getStreamReader,
-                textLines =>
-                    {
-                        if (textLines == null)
-                            return;
-
-                        scannedBatch.Add(textLines);
-                        if (scannedBatch.Count >= _scanBatch)
-                        {
-                            var batch = scannedBatch;
-                            scannedBatch = new List<List<TextLine>>();
-
-                            PushCompilerPool(compilerTasks, () => Compile(context, batch, false));
-                        }
-                    }))
+            using (var scanner = _executor.CreateScanner(
+                () => new StreamReader(dataFilePath),
+                textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks)))
                 scanner.Start(take, skip);
 
-            Task.WaitAll(compilerTasks.ToArray());
+            Task.WaitAll(extractTasks.ToArray());
 
-            Compile(context, scannedBatch, true);
+            OnExtractAndTransform(scannedBatch, true);
 
             _sequenceFlushBuffer.WaitFlush();
             _loaders.ForEach(e => e.WaitToComplete());
         }
 
-        private void Compile(Context context, List<List<TextLine>> scannedBatch, bool isLast)
+        private List<List<TextLine>> OnScanned(List<TextLine> textLines, List<List<TextLine>> batch, List<Task> extractionTasks)
+        {
+            if (textLines != null)
+            {
+                batch.Add(textLines);
+                if (batch.Count >= _scanBatch)
+                {
+                    var temp = batch;
+                    batch = new List<List<TextLine>>();
+
+                    PushExtractorPool(extractionTasks, () => OnExtractAndTransform(temp, false));
+                }
+            }
+
+            return batch;
+        }
+
+        private void OnExtractAndTransform(List<List<TextLine>> scannedBatch, bool isLast)
         {
             var batch = new TransformResult();
 
@@ -121,14 +138,14 @@ namespace Etl.Core
             {
                 try
                 {
-                    _compiler.RemoveComments(textLines);
+                    _executor.RemoveComments(textLines);
 
                     _events?.OnScanned?.Invoke(textLines);
 
-                    var record = _compiler.Extract(textLines, _events);
+                    var record = _executor.Extract(textLines, _events);
                     _events?.OnExtracted?.Invoke(record);
 
-                    var result = _compiler.Transform(record, context);
+                    var result = _executor.Transform(record, _context);
                     _events?.OnTransformed?.Invoke(result);
 
                     batch.Append(result);
@@ -142,11 +159,11 @@ namespace Etl.Core
             TransformResult temp = null;
             lock (this)
             {
-                _flushBuffer.Append(batch);
-                if (isLast || _flushBuffer.Items.Count >= _flushBatch)
+                _transformResult.Append(batch);
+                if (isLast || _transformResult.Items.Count >= _flushBatch)
                 {
-                    temp = _flushBuffer;
-                    _flushBuffer = new TransformResult(_flushBatch);
+                    temp = _transformResult;
+                    _transformResult = new TransformResult(_flushBatch);
                 }
             }
 
@@ -154,7 +171,32 @@ namespace Etl.Core
                 _sequenceFlushBuffer.Push(temp, isLast);
         }
 
-        private void PushCompilerPool(List<Task> parserTasks, Action action)
+        private void OnTransformed(TransformResult result, bool isFirst, bool isLast, string dataFile)
+        {
+            if (isFirst)
+            {
+                isFirst = false;
+                //_loaders.ForEach(e => e.Initialize(configuration, dataFile, _executor.AllFields));
+                _loaders.ForEach(e => e.Initialize(null, dataFile, _executor.AllFields));
+            }
+
+            var batch = _executor.ApplyMassage(result.Items);
+            var batchResult = new BatchResult
+            {
+                Batch = batch,
+                Errors = result.Errors,
+                TotalValidRecords = _totalValidRecords += batch.Count,
+                TotalErrors = _totalErrors += result.TotalErrors,
+                TotalRecords = _totalRecords += result.TotalRecords,
+                StartAt = _start,
+                IsLast = isLast
+            };
+
+            _loaders.ForEach(e => e.ProcessBatch(batchResult));
+            _events?.OnTransformedBatch?.Invoke(batchResult);
+        }
+
+        private void PushExtractorPool(List<Task> extractTasks, Action action)
         {
             if (_maxBatchBuffer > 0)
             {
@@ -172,14 +214,14 @@ namespace Etl.Core
             }
 
             Task t = null;
-            lock (parserTasks)
+            lock (extractTasks)
             {
-                if (parserTasks.Count < _maxCompilerThread)
+                if (extractTasks.Count < _maxExtractorThread)
                 {
-                    parserTasks.Add(t = new(() =>
+                    extractTasks.Add(t = new(() =>
                     {
                         try { action(); }
-                        finally { lock (parserTasks) { parserTasks.Remove(t); } }
+                        finally { lock (extractTasks) { extractTasks.Remove(t); } }
                     }));
                 }
             }

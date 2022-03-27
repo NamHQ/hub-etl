@@ -23,8 +23,8 @@ namespace Etl.Core.Extraction
                 var endIndex = Math.Min(block.Count - 1, to.row);
 
                 var sb = new StringBuilder();
-                sb.Append($"From(r.{block[startIndex].Row}, c.{WriteColumn(from)})");
-                sb.Append($"-To(r.{block[endIndex].Row}, c.{WriteColumn(to)})");
+                sb.Append($"From(R.{block[startIndex].Row}, {WriteColumn(from)})");
+                sb.Append($"-To(R.{block[endIndex].Row}, {WriteColumn(to)})");
 
                 var lines = new List<string>();
 

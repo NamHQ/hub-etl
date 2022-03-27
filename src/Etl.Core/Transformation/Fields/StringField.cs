@@ -25,7 +25,7 @@ namespace Etl.Core.Transformation.Fields
             _regexPattern = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(Pattern) ? null : new Regex(Pattern));
         }
 
-        protected override string Convert(string text, ExtractedResult extractedResult, Context context)
+        protected override string Convert(string text, ExtractedResult extractedResult, IEtlContext context)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return null;
@@ -40,7 +40,7 @@ namespace Etl.Core.Transformation.Fields
             return _blackListChars.Replace(text, " ");
         }
 
-        protected override void Validate(string value, ExtractedResult extractedResult, Context context)
+        protected override void Validate(string value, ExtractedResult extractedResult, IEtlContext context)
         {
             if (MinLength > 0 && (value == null || value.Length < MinLength))
                 Stop(extractedResult, nameof(MinLength));

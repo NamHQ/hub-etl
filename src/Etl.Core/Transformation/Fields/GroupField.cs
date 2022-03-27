@@ -36,10 +36,10 @@ namespace Etl.Core.Transformation.Fields
             });
         }
 
-        public override object Transform(IDictionary<string, object> record, Context context)
+        public override object Transform(IDictionary<string, object> record, IEtlContext context)
             => TranformOneParserdRecord(record, context);
 
-        protected virtual TransformResult TranformOneParserdRecord(IDictionary<string, object> record, Context context)
+        protected virtual TransformResult TranformOneParserdRecord(IDictionary<string, object> record, IEtlContext context)
         {
             IDictionary<string, object> newRecord = null;
             var result = LazyFlatArray.Value?.Transform(record, context) as TransformResult ?? new TransformResult();

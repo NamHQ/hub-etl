@@ -28,7 +28,7 @@ namespace Etl.Core.Transformation
             MakeSureMergeParserFields(_collectionField, layout);
         }
 
-        public TransformResult ExtractFields(IDictionary<string, object> record, Context context)
+        public TransformResult ExtractFields(IDictionary<string, object> record, IEtlContext context)
             => _collectionField.Transform(record, context) as TransformResult;
 
         public Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> CreateTranformInstance()

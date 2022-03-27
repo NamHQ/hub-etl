@@ -10,7 +10,7 @@ namespace Etl.Core.Transformation.Fields
         {
         }
 
-        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, Context context)
+        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, IEtlContext context)
         {
             var text = base.Modify(extractedResult, record, context);
 
@@ -22,7 +22,7 @@ namespace Etl.Core.Transformation.Fields
             return text;
         }
 
-        protected override bool? Convert(string text, ExtractedResult extractedResult, Context context)
+        protected override bool? Convert(string text, ExtractedResult extractedResult, IEtlContext context)
             => string.IsNullOrEmpty(text) ? null : System.Convert.ToBoolean(text);
     }
 }
