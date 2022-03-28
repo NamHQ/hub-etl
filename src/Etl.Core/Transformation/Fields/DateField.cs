@@ -4,7 +4,6 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-
     public class DateField : FieldBase<DateTime?>
     {
         [XmlAttribute]

@@ -18,6 +18,6 @@ namespace Etl.Core
 
         public TransformDef Transformation { get; set; } = new();
 
-        public List<Loader> Loaders { get; set; } = new();
+        public List<LoaderDef> Loaders { get; set; } = new();
     }
 }

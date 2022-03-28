@@ -1,10 +1,7 @@
-﻿using Etl.Core.Load;
-using Etl.Core.Settings;
+﻿using Etl.Core.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
@@ -22,23 +19,22 @@ namespace Etl.Core
         private readonly Dictionary<string, (EtlDef definition, EtlExecutor executor)> _caches = new();
         private readonly ConfigFilesSetting _setting;
         private readonly List<(Regex matcher, string configFile)> _matchers = new();
-        private readonly Lazy<XmlAttributeOverrides> _lazyAttrOverrides;
+        private readonly XmlAttributeOverrides _loaderDefsAttrOverrides;
 
-        public EtlFactory(EtlSetting setting)
+        public EtlFactory(EtlSetting setting, List<Type> loaderDefs)
         {
             _setting = setting?.ConfigFiles ?? new ConfigFilesSetting();
 
             foreach (var e in _setting.Matches)
                 _matchers.Add((new Regex(e.Key, RegexOptions.Compiled), e.Value));
 
-            _lazyAttrOverrides = new Lazy<XmlAttributeOverrides>(() => GetAttributeOverrides(setting.References));
+            _loaderDefsAttrOverrides = GetAttributeOverrides(loaderDefs);
         }
 
-        public void Save(EtlDef config, string fileName)
+        public void Save(EtlDef config, string filePath)
         {
-            var serializer = new XmlSerializer(typeof(EtlDef), _lazyAttrOverrides.Value);
-            var path = Path.Combine(_setting.Folder, fileName);
-            using var stream = new StreamWriter(path);
+            var serializer = new XmlSerializer(typeof(EtlDef), _loaderDefsAttrOverrides);
+            using var stream = new StreamWriter(filePath);
 
             serializer.Serialize(stream, config);
         }
@@ -65,8 +61,7 @@ namespace Etl.Core
                 {
                     if (!_caches.TryGetValue(configFilePath, out cache))
                     {
-
-                        var serializer = new XmlSerializer(typeof(EtlDef), _lazyAttrOverrides.Value);
+                        var serializer = new XmlSerializer(typeof(EtlDef), _loaderDefsAttrOverrides);
                         serializer.UnknownNode += (sender, e) =>
                             Console.WriteLine("Unknown Node:" + e.Name + "\t" + e.Text);
 
@@ -93,28 +88,15 @@ namespace Etl.Core
 
             return cache;
         }
-        private static XmlAttributeOverrides GetAttributeOverrides(List<string> references)
+        private static XmlAttributeOverrides GetAttributeOverrides(List<Type> loaderDefs)
         {
             var attrOverrides = new XmlAttributeOverrides();
-            var types = new List<Type> { typeof(ConsoleLoader) };
-
-            if (references != null && references.Count > 0)
-                types.AddRange(references
-                    .Select(e =>
-                    {
-                        var fileInfo = new FileInfo(e);
-                        if (!fileInfo.Exists)
-                            throw new Exception($"File not found {e} to refer.");
-                        return Assembly.LoadFrom(fileInfo.FullName);
-                    })
-                    .SelectMany(e => e.GetTypes())
-                    .Where(e => typeof(Loader).IsAssignableFrom(e) && !e.IsAbstract));
 
             var attrs = new XmlAttributes();
-            foreach (var e in types)
+            foreach (var e in loaderDefs)
                 attrs.XmlArrayItems.Add(new XmlArrayItemAttribute
                 {
-                    ElementName = e.Name.Replace("Loader", ""),
+                    ElementName = e.Name.Replace("LoaderDef", ""),
                     Type = e
                 });
             attrOverrides.Add(typeof(EtlDef), nameof(EtlDef.Loaders), attrs);

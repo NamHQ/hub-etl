@@ -1,15 +1,31 @@
 ﻿using Etl.Core.Transformation.Fields;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 
 namespace Etl.Core.Load
 {
-    public abstract class Loader
+    //IMPORTANT: ILoaderArgs is transient, it is created with workflow.
+
+    public interface ILoader
     {
-        public virtual void Initialize(IConfiguration appSetting, string inputFile, IReadOnlyCollection<FieldBase> fields) { }
+        void Initalize(object args, string inputFile, IReadOnlyCollection<FieldBase> fields);
+        void ProcessBatch(BatchResult batch);
+        void WaitToComplete();
+    }
 
-        public abstract void ProcessBatch(BatchResult parseResult);
+    public abstract class Loader<TLoader, TDef> : ILoader
+        where TLoader : Loader<TLoader, TDef>
+        where TDef : LoaderDef<TLoader, TDef>
+    {
+        protected virtual void Initalize(TDef args, string inputFile, IReadOnlyCollection<FieldBase> fields) { }
+        void ILoader.Initalize(object config, string inputFile, IReadOnlyCollection<FieldBase> fields)
+            => Initalize(config as TDef, inputFile, fields);
 
-        public virtual void WaitToComplete() { }
+        protected abstract void ProcessBatch(BatchResult parseResult);
+        void ILoader.ProcessBatch(BatchResult parseResult)
+            => ProcessBatch(parseResult);
+
+        protected virtual void WaitToComplete() { }
+        void ILoader.WaitToComplete()
+            => WaitToComplete();
     }
 }

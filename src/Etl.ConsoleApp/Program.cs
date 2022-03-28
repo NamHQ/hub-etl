@@ -10,22 +10,26 @@ namespace Etl.ConsoleApp
     {
         static void Main(string[] arguments)
         {
+            Console.WriteLine($"\n============================ START {DateTime.Now} ================================");
+
             try
             {
                 var configuration = BuildConfiguration();
                 var args = BuildArgs(configuration, arguments);
 
-                Console.WriteLine($"\n============================ START {DateTime.Now} ================================");
-
                 var services = new ServiceCollection();
+                services.AddSingleton(configuration);
+                services.AddEtl(configuration, typeof(CsvLoader).Assembly);
 
-                services.AddEtl(configuration);
+                var sp = services.BuildServiceProvider();
 
-                services.BuildServiceProvider()
-                   .GetRequiredService<Workflow>()
+                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
+
+                sp.GetRequiredService<Workflow>()
                    .SetConfig(args.Config)
-                   .SetConfig(args.ConfigFile)      //Override args.Config
-                   .AddLoaders(new CsvLoader())
+                   .SetConfig(args.ConfigFile)                  //Override args.Config
+                   //.AddLoaders(new CsvLoaderArgs())
+                   //.AddLoaders(new ConsoleLoader())
                    .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,
@@ -70,7 +74,7 @@ namespace Etl.ConsoleApp
 
             //args.Config = ConfigTest.CreateCD028();
             args.Config = ConfigTest.CreateDelimiterDemoConfig();
-            //EtlDefManager.Save(args.Config, $"{dataFoler}/Data/Delimiter-demo.xml", appSetting);
+            //EtlFactory.Save(args.Config, $"{dataFoler}/Delimiter-demo.xml");
             arguments = new string[] {
                 //$"{dataFoler}/FDC_CRVD3071_CD028_2111161907",
                 //"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",

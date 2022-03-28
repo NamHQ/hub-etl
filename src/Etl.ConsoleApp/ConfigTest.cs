@@ -246,13 +246,13 @@ namespace Etl.ConsoleApp
 
                 Loaders =
                 {
-                    new ConsoleLoader {},
+                    new ConsoleLoaderArgs {},
 
-                    new CsvLoader { OutPath="$path/$name.cards", Delemiter=",", Fields={
+                    new CsvLoaderDef { OutPath="$path/$name.cards", Delimiter=",", Fields={
                         "HashedAccountNumber", "AccountNumber"
                     } },
 
-                    new CsvLoader { OutPath="$path/$name.trans", Delemiter="|", Fields = {
+                    new CsvLoaderDef { OutPath="$path/$name.trans", Delimiter="|", Fields = {
                         "RecordID", "FileSource", "ReportDate", "MerchantNumber", "TerminalNumber",
                         "BatchNumber", "CardType", "BinNumber", "LastFourAccountNumber", "AccountNumber",
                         "ExpirationDate", "TransactionCode", "TransactionDate", "TransactionTime", "TransactionAmount",
@@ -275,10 +275,10 @@ namespace Etl.ConsoleApp
                         }
                     },
 
-                    //new MongoDbLoader
-                    //{
-                    //    CollectionName = "Test"
-                    //}
+                    new MongoDbLoaderDef
+                    {
+                        CollectionName = "Test"
+                    }
                 }
             };
         }
@@ -502,10 +502,13 @@ namespace Etl.ConsoleApp
                 {
                     Fields =
                     {
-                        new IntegerField { Field="F3", Required=true}
+                        new IntegerField { Field="F3", Required=true }
                     }
+                },
+                Loaders =
+                {
+                    new CsvLoaderDef()
                 }
-
             };
         }
     }

@@ -1,35 +1,36 @@
 ﻿using Etl.Core.Load;
 using Etl.Core.Transformation.Fields;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class CsvLoader : FileLoader
+    public class CsvLoader : FileLoader<CsvLoader, CsvLoaderDef>
     {
-        [XmlAttribute]
-        public string Delemiter { get; set; } = "|";
-
-        public List<string> Fields { get; set; } = new();
-
         private Dictionary<string, int> _fieldOrders;
+        private string _delimiter;
 
-        public override void Initialize(IConfiguration appSetting, string inputFile, IReadOnlyCollection<FieldBase> fields)
+        protected override void Initalize(CsvLoaderDef args, string inputFile, IReadOnlyCollection<FieldBase> fields)
         {
-            base.Initialize(appSetting, inputFile, fields);
+            //args must be immutable, it is singleton.
+            base.Initalize(args, inputFile, fields);
+            var selectedFields = new List<string>();
 
-            if (Fields.Count == 0)
-                Fields.AddRange(fields.Select(e => e.Field ?? e.ParserField));
+            if (args.Fields.Count == 0)
+                selectedFields.AddRange(fields.Select(e => e.Field ?? e.ParserField));
+            else
+                selectedFields.AddRange(args.Fields);
 
-            _stream.WriteLine(string.Join('|', Fields));
+            _delimiter = args.Delimiter;
+            _stream.WriteLine(string.Join('|', selectedFields));
 
             if (_fieldOrders == null)
                 _fieldOrders = new Dictionary<string, int>();
 
-            for (var i = 0; i < Fields.Count; i++)
-                _fieldOrders[Fields[i]] = i;
+            for (var i = 0; i < selectedFields.Count; i++)
+                _fieldOrders[selectedFields[i]] = i;
+
+            
         }
 
         protected override void OnProcessBatch(BatchResult result)
@@ -50,7 +51,7 @@ namespace Etl.Storage
                     eles[order] = e.Value;
             }
 
-            var text = string.Join(Delemiter, eles);
+            var text = string.Join(_delimiter, eles);
             _stream?.WriteLine(text);
         }
     }

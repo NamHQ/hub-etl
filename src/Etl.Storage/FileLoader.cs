@@ -1,29 +1,26 @@
 ﻿using Etl.Core.Load;
 using Etl.Core.Transformation.Fields;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public abstract class FileLoader : Loader
+    public abstract class FileLoader<TLoader, TDef> : Loader<TLoader, TDef>
+        where TLoader : FileLoader<TLoader, TDef>
+        where TDef : FileLoaderDef<TLoader, TDef>
     {
-        [XmlAttribute]
-        public string OutPath { get; set; } = "$path/$name.result";
-
         protected StreamWriter _stream;
 
-        public override void Initialize(IConfiguration appSetting, string inputFile, IReadOnlyCollection<FieldBase> fields)
+        protected override void Initalize(TDef args, string inputFile, IReadOnlyCollection<FieldBase> fields)
         {
             var file = new FileInfo(inputFile);
-            var path = OutPath.Replace("$path", file.DirectoryName)
+            var path = args.OutPath.Replace("$path", file.DirectoryName)
                 .Replace("$name", file.Name);
 
             _stream = new StreamWriter(path);
         }
 
-        public sealed override void ProcessBatch(BatchResult result)
+        protected sealed override void ProcessBatch(BatchResult result)
         {
             OnProcessBatch(result);
 
