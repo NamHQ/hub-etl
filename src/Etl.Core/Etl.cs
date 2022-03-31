@@ -13,8 +13,6 @@ namespace Etl.Core
     {
         private readonly Extractor _extractor;
         private readonly Transformer _transformer;
-
-        private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _massageInstance;
         public IReadOnlyCollection<TransformField> AllFields => _transformer.AllFields;
 
         public Etl(EtlDef etfDef)
@@ -37,6 +35,6 @@ namespace Etl.Core
             => _transformer.Execute(record, context);
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
-            => _massageInstance == null ? batch : _massageInstance(batch);
+            => _transformer.ApplyMassage(batch);
     }
 }
