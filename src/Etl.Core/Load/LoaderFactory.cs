@@ -5,7 +5,7 @@ namespace Etl.Core.Load
 {
     public interface ILoaderFactory
     {
-        List<(ILoader loader, LoaderDef args)> Get(IEnumerable<LoaderDef> args);
+        List<(LoaderDef definition, ILoader instance)> Get(IEnumerable<LoaderDef> args);
     }
 
     public class LoaderFactory : ILoaderFactory
@@ -17,9 +17,9 @@ namespace Etl.Core.Load
             _sp = sp;
         }
 
-        public List<(ILoader loader, LoaderDef args)> Get(IEnumerable<LoaderDef> args)
+        public List<(LoaderDef definition, ILoader instance)> Get(IEnumerable<LoaderDef> args)
         {
-            var loaders = new List<(ILoader loader, LoaderDef args)>();
+            var loaders = new List<(LoaderDef, ILoader)>();
             if (args != null)
                 foreach (var e in args)
                 {
@@ -33,7 +33,7 @@ namespace Etl.Core.Load
                             var loader = (ILoader)_sp.GetService(generic[0]);
                             if (loader == null)
                                 throw new Exception($"Cannot instantiate implementation type '{generic[0].FullName}'");
-                            loaders.Add((loader, e));
+                            loaders.Add((e, loader));
                             break;
                         }
                     }

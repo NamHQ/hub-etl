@@ -3,9 +3,7 @@ using Etl.Core.Events;
 using Etl.Core.Scanner;
 using Etl.Core.Extraction;
 using Etl.Core.Transformation;
-using System.Text.RegularExpressions;
 using System;
-using System.Linq;
 using Etl.Core.Transformation.Fields;
 using System.IO;
 
