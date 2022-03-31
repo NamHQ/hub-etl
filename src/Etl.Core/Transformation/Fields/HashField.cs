@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class HashField : FieldBase<string>
+    public class HashField : DataField<string>
     {
         protected override string Convert(string text, ExtractedResult extractedResult, IEtlContext context)
         {

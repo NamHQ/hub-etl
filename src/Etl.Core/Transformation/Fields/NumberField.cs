@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class NumberField<T> : FieldBase<T>
+    public abstract class NumberField<T> : DataField<T>
     {
         protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, IEtlContext context)
         {

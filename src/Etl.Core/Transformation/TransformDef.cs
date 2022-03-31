@@ -16,7 +16,7 @@ namespace Etl.Core.Transformation
         [XmlArrayItem("Encrypt", typeof(EncryptField))]
         [XmlArrayItem("Group", typeof(GroupField))]
         [XmlArrayItem("Array", typeof(ArrayField))]
-        public List<FieldBase> Fields { get; set; } = new();
+        public List<TransformField> Fields { get; set; } = new();
 
         public MassageDataCSharpCode Massage { get; set; } = new();
     }

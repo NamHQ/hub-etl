@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class DateField : FieldBase<DateTime?>
+    public class DateField : DataField<DateTime?>
     {
         [XmlAttribute]
         public DateTime Max { get; set; } = DateTime.MaxValue;

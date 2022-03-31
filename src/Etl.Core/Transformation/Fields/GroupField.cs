@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class GroupField : FieldBase
+    public class GroupField : TransformField<TransformResult>
     {
         [XmlArrayItem("Integer", typeof(IntegerField))]
         [XmlArrayItem("Float", typeof(FLoatField))]
@@ -15,7 +15,10 @@ namespace Etl.Core.Transformation.Fields
         [XmlArrayItem("Encrypt", typeof(EncryptField))]
         [XmlArrayItem("Group", typeof(GroupField))]
         [XmlArrayItem("Array", typeof(ArrayField))]
-        public virtual List<FieldBase> Fields { get; set; } = new();
+        public virtual List<TransformField> Fields { get; set; } = new();
+
+        [XmlAnyAttribute]
+        public HashSet<string> IgnoreParserFields { get; set; } = new();
 
         protected readonly Lazy<ArrayField> LazyFlatArray;
 
@@ -36,10 +39,7 @@ namespace Etl.Core.Transformation.Fields
             });
         }
 
-        public override object Transform(IDictionary<string, object> record, IEtlContext context)
-            => TranformOneParserdRecord(record, context);
-
-        protected virtual TransformResult TranformOneParserdRecord(IDictionary<string, object> record, IEtlContext context)
+        protected override TransformResult Start(IDictionary<string, object> record, IEtlContext context)
         {
             IDictionary<string, object> newRecord = null;
             var result = LazyFlatArray.Value?.Transform(record, context) as TransformResult ?? new TransformResult();

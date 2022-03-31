@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class BooleanField : FieldBase<bool?>
+    public class BooleanField : DataField<bool?>
     {
         public BooleanField()
         {

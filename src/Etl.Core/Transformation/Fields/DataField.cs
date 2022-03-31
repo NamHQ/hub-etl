@@ -6,30 +6,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class FieldBase
-    {
-        [XmlAttribute]
-        public string Field { get; set; }
-        internal readonly Lazy<string> LazyDbField;
-
-        [XmlAttribute]
-        public string ParserField { get; set; }
-        internal readonly Lazy<string> LazyParserField;
-
-        [XmlAttribute]
-        public bool Required { get; set; }
-
-        protected FieldBase()
-        {
-            LazyDbField = new Lazy<string>(() => string.IsNullOrWhiteSpace(Field) ? ParserField : Field);
-            LazyParserField = new Lazy<string>(() => string.IsNullOrWhiteSpace(ParserField) ? Field : ParserField);
-        }
-
-        public abstract object Transform(IDictionary<string, object> record, IEtlContext context);
-
-    }
-
-    public abstract class FieldBase<T> : FieldBase
+    public abstract class DataField<T> : TransformField<T>
     {
         [XmlElement("Modify")]
         public ModificationActionBase ModifyAction { get; set; }
@@ -39,9 +16,7 @@ namespace Etl.Core.Transformation.Fields
                 ? null
                 : value as ExtractedResult;
 
-        public override object Transform(IDictionary<string, object> record, IEtlContext context)
-            => Start(record, context);
-        protected virtual T Start(IDictionary<string, object> record, IEtlContext context)
+        protected override T Start(IDictionary<string, object> record, IEtlContext context)
         {
             var extractedResult = GetExtractedResult(record);
 

@@ -16,14 +16,14 @@ namespace Etl.Core.Transformation
         private const string CLASS = "tempClass";
         private const string METHOD = "Execute";
         private readonly Assembly _transformHAssembly;
-        private readonly CollectionField _collectionField;
+        private readonly GroupField _collectionField;
 
-        public IReadOnlyCollection<FieldBase> AllFields => _collectionField.Fields;
+        public IReadOnlyCollection<TransformField> AllFields => _collectionField.Fields;
 
         public Transformer(TransformDef generator, LayoutDef layout)
         {
             _transformHAssembly = CompileCSharpCode(generator.Massage);
-            _collectionField = new CollectionField { Fields = generator.Fields };
+            _collectionField = new GroupField { Fields = generator.Fields };
 
             MakeSureMergeParserFields(_collectionField, layout);
         }
@@ -41,9 +41,9 @@ namespace Etl.Core.Transformation
             return batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
         }
 
-        public static void MakeSureMergeParserFields(CollectionField mapFields, LayoutDef layout)
+        public static void MakeSureMergeParserFields(GroupField mapFields, LayoutDef layout)
         {
-            List<FieldBase> parseFields = new();
+            List<TransformField> parseFields = new();
             GetParserFieldsRecursive(layout, parseFields);
 
             if (mapFields.Fields.Count == 0)
@@ -52,7 +52,7 @@ namespace Etl.Core.Transformation
                 MergeFieldsRecursive(mapFields.Fields, parseFields, mapFields.IgnoreParserFields);
         }
 
-        private static void GetParserFieldsRecursive(LayoutDef layout, List<FieldBase> parserFields)
+        private static void GetParserFieldsRecursive(LayoutDef layout, List<TransformField> parserFields)
         {
             if (layout == null)
                 return;
@@ -73,7 +73,7 @@ namespace Etl.Core.Transformation
                 layout.Children.ForEach(e => GetParserFieldsRecursive(e, parserFields));
         }
 
-        private static void MergeFieldsRecursive(List<FieldBase> mapFields, List<FieldBase> parserFields, HashSet<string> ignoreParserFields)
+        private static void MergeFieldsRecursive(List<TransformField> mapFields, List<TransformField> parserFields, HashSet<string> ignoreParserFields)
         {
             var dictionary = mapFields.ToDictionary(e =>
             {
@@ -84,7 +84,7 @@ namespace Etl.Core.Transformation
             });
 
             foreach (var field in parserFields.Where(x => !ignoreParserFields.Contains(x.LazyParserField.Value)))
-                if (!dictionary.TryGetValue(field.LazyParserField.Value, out FieldBase mapField))
+                if (!dictionary.TryGetValue(field.LazyParserField.Value, out TransformField mapField))
                 {
                     mapFields.Add(field);
                 }

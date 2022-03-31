@@ -22,7 +22,7 @@ namespace Etl.Core
         private readonly List<Extractor> _layoutComments = new();
 
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _massageInstance;
-        public IReadOnlyCollection<FieldBase> AllFields => _transformer.AllFields;
+        public IReadOnlyCollection<TransformField> AllFields => _transformer.AllFields;
 
         public EtlExecutor(EtlDef etfDef)
         {

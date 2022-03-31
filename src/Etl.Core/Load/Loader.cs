@@ -7,7 +7,7 @@ namespace Etl.Core.Load
 
     public interface ILoader
     {
-        void Initalize(object args, string inputFile, IReadOnlyCollection<FieldBase> fields);
+        void Initalize(object args, string inputFile, IReadOnlyCollection<TransformField> fields);
         void ProcessBatch(BatchResult batch);
         void WaitToComplete();
     }
@@ -16,8 +16,8 @@ namespace Etl.Core.Load
         where TLoader : Loader<TLoader, TDef>
         where TDef : LoaderDef<TLoader, TDef>
     {
-        protected virtual void Initalize(TDef args, string inputFile, IReadOnlyCollection<FieldBase> fields) { }
-        void ILoader.Initalize(object config, string inputFile, IReadOnlyCollection<FieldBase> fields)
+        protected virtual void Initalize(TDef args, string inputFile, IReadOnlyCollection<TransformField> fields) { }
+        void ILoader.Initalize(object config, string inputFile, IReadOnlyCollection<TransformField> fields)
             => Initalize(config as TDef, inputFile, fields);
 
         protected abstract void ProcessBatch(BatchResult parseResult);

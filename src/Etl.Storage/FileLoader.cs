@@ -11,7 +11,7 @@ namespace Etl.Storage
     {
         protected StreamWriter _stream;
 
-        protected override void Initalize(TDef args, string inputFile, IReadOnlyCollection<FieldBase> fields)
+        protected override void Initalize(TDef args, string inputFile, IReadOnlyCollection<TransformField> fields)
         {
             var file = new FileInfo(inputFile);
             var path = args.OutPath.Replace("$path", file.DirectoryName)

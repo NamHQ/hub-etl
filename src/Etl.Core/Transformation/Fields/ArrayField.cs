@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class ArrayField : CollectionField
+    public class ArrayField : GroupField
     {
         [XmlAttribute]
         public bool Flat { get; set; }
@@ -21,7 +21,7 @@ namespace Etl.Core.Transformation.Fields
             var result = new TransformResult();
             foreach (var nextRecord in nestedRecords)
             {
-                var oneResult = TranformOneParserdRecord(nextRecord, context);
+                var oneResult = base.Start(nextRecord, context);
                 result.Items.AddRange(oneResult.Items);
                 result.TotalErrors += oneResult.TotalErrors;
                 result.AddErorrs(oneResult.Errors);
