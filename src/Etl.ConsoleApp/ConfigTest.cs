@@ -246,7 +246,7 @@ namespace Etl.ConsoleApp
 
                 Loaders =
                 {
-                    new ConsoleLoaderArgs {},
+                    new ConsoleLoaderDef {},
 
                     new CsvLoaderDef { OutPath="$path/$name.cards", Delimiter=",", Fields={
                         "HashedAccountNumber", "AccountNumber"

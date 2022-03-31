@@ -58,7 +58,7 @@ namespace Etl.Core
             foreach (var type in types)
                 services.AddTransient(type);
 
-            types =  new List<Type> { typeof(ConsoleLoaderArgs) };
+            types =  new List<Type> { typeof(ConsoleLoaderDef) };
             types.AddRange(assemblies
                    .SelectMany(e => e.GetTypes())
                    .Where(e => typeof(LoaderDef).IsAssignableFrom(e) && !e.IsAbstract));
