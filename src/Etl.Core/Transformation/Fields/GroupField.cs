@@ -17,32 +17,29 @@ namespace Etl.Core.Transformation.Fields
         [XmlArrayItem("Array", typeof(ArrayField))]
         public virtual List<TransformField> Fields { get; set; } = new();
 
-        [XmlAnyAttribute]
         public HashSet<string> IgnoreParserFields { get; set; } = new();
 
-        protected readonly Lazy<ArrayField> LazyFlatArray;
+        protected ArrayField FlatArray;
 
-        public GroupField()
+        public override void Initialize(IServiceProvider sp)
         {
-            LazyFlatArray = new Lazy<ArrayField>(() =>
+            foreach (var e in Fields)
             {
-                ArrayField flatField = null;
-                foreach (var e in Fields)
-                    if (e is ArrayField array && array.Flat)
-                    {
-                        if (flatField != null)
-                            throw new Exception($"Not except multiple flat {nameof(ArrayField)} in the same hierarchy.");
+                e.Initialize(sp);
+                if (e is ArrayField array && array.Flat)
+                {
+                    if (FlatArray != null)
+                        throw new Exception($"Not except multiple flat {nameof(ArrayField)} in the same hierarchy.");
 
-                        flatField = array;
-                    }
-                return flatField;
-            });
+                    FlatArray = array;
+                }
+            }
         }
 
         protected override TransformResult Start(IDictionary<string, object> record, IEtlContext context)
         {
             IDictionary<string, object> newRecord = null;
-            var result = LazyFlatArray.Value?.Transform(record, context) as TransformResult ?? new TransformResult();
+            var result = FlatArray?.Transform(record, context) as TransformResult ?? new TransformResult();
             if (result.Items.Count == 0)
                 result.Items.Add(newRecord = new Dictionary<string, object>());
 
@@ -50,7 +47,7 @@ namespace Etl.Core.Transformation.Fields
             {
                 foreach (var field in Fields)
                 {
-                    if (field == LazyFlatArray.Value)
+                    if (field == FlatArray)
                         continue;
 
                     var val = field.Transform(record, context);

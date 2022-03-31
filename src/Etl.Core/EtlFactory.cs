@@ -9,9 +9,9 @@ namespace Etl.Core
 {
     public interface IEtlFactory
     {
-        (EtlDef definition, Etl executor) Load(string dataFilePath);
+        (EtlDef definition, Etl instance) Get(string dataFilePath);
 
-        (EtlDef definition, Etl executor) DirectlyLoad(string configFilePath);
+        (EtlDef definition, Etl instance) GetFrom(string configFilePath);
     }
 
     public class EtlFactory : IEtlFactory
@@ -39,22 +39,22 @@ namespace Etl.Core
             serializer.Serialize(stream, config);
         }
 
-        public (EtlDef definition, Etl executor) Load(string dataFilePath)
+        public (EtlDef definition, Etl instance) Get(string dataFilePath)
         {
             dataFilePath = dataFilePath.ToLower();
             foreach (var (matcher, configFile) in _matchers)
             {
                 if (matcher.IsMatch(dataFilePath))
-                    return DirectlyLoad(Path.Combine(_setting.Folder, configFile));
+                    return GetFrom(Path.Combine(_setting.Folder, configFile));
             }
 
             var fileInfo = new FileInfo(dataFilePath);
             dataFilePath = $"{fileInfo.Directory}/{Path.GetFileNameWithoutExtension(fileInfo.Name)}.xml";
 
-            return DirectlyLoad(dataFilePath);
+            return GetFrom(dataFilePath);
         }
 
-        public (EtlDef definition, Etl executor) DirectlyLoad(string configFilePath)
+        public (EtlDef definition, Etl instance) GetFrom(string configFilePath)
         {
             if (!_caches.TryGetValue(configFilePath, out var cache))
                 lock (_caches)

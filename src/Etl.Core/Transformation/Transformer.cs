@@ -21,16 +21,18 @@ namespace Etl.Core.Transformation
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _applyMassage;
         public IReadOnlyCollection<TransformField> AllFields => _collectionField.Fields;
 
-        public Transformer(TransformDef transformDef, LayoutDef layout)
+        public Transformer(TransformDef transformDef, LayoutDef layoutDef)
         {
             _massageAssembly = CompileCSharpCode(transformDef.Massage);
             _collectionField = new GroupField { Fields = transformDef.Fields };
 
-            MakeSureMergeParserFields(_collectionField, layout);
+            MakeSureMergeParserFields(_collectionField, layoutDef);
         }
 
-        public void Reset()
+        public void Initialize(IServiceProvider sp)
         {
+            _collectionField.Initialize(sp);
+
             if (_massageAssembly != null)
             {
                 var instance = _massageAssembly.CreateInstance($"{NAMESPACE}.{CLASS}");

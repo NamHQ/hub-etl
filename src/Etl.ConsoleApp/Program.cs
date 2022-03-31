@@ -23,12 +23,12 @@ namespace Etl.ConsoleApp
 
                 var sp = services.BuildServiceProvider();
 
-                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
+                sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
 
                 sp.GetRequiredService<Workflow>()
                    .SetConfig(args.Config)
                    .SetConfig(args.ConfigFile)                  //Override args.Config
-                   //.AddLoaders(new CsvLoaderArgs())
+                   //.AddLoaders(new CsvLoaderDef())
                    //.AddLoaders(new ConsoleLoader())
                    .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,

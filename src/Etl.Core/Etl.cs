@@ -21,9 +21,9 @@ namespace Etl.Core
             _transformer = new Transformer(etfDef.Transformation, etfDef.Extraction.Layout);
         }
 
-        public Scanner.Scanner CreateScanner(Func<StreamReader> getStreamReader, Action<List<TextLine>> flush)
+        public Scanner.Scanner Start(Func<StreamReader> getStreamReader, IServiceProvider sp, Action<List<TextLine>> flush)
         {
-            _transformer.Reset();
+            _transformer.Initialize(sp);
 
             return _extractor.CreateScanner(getStreamReader, flush);
         }

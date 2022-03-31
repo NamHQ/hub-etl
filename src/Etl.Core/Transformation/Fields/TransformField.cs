@@ -23,6 +23,7 @@ namespace Etl.Core.Transformation.Fields
             LazyParserField = new Lazy<string>(() => string.IsNullOrWhiteSpace(ParserField) ? Field : ParserField);
         }
 
+        public virtual void Initialize(IServiceProvider sp) { }
         public abstract object Transform(IDictionary<string, object> record, IEtlContext context);
     }
 

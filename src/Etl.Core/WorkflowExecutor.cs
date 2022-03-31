@@ -15,11 +15,10 @@ namespace Etl.Core
     {
         private readonly int _maxExtractorThread;
         private readonly int _maxBatchBuffer;
-        private readonly IEtlContext _context;
-
-        private readonly ICompilerEvent _events;
         private readonly int _scanBatch;
         private readonly int _flushBatch;
+        private readonly IEtlContext _context;
+        private readonly ICompilerEvent _events;
         private readonly List<(LoaderDef definition, ILoader instance)> _loaders = new();
         private readonly Etl _etl;
 
@@ -46,7 +45,7 @@ namespace Etl.Core
             _transformResult = new TransformResult(_flushBatch);
         }
 
-        public void Start(string dataFilePath, int? take = null, int? skip = null)
+        public void Start(string dataFilePath, IServiceProvider sp, int? take = null, int? skip = null)
         {
             bool isFirst = true;
             _sequenceFlushBuffer = new SequenceFlushBuffer((result, isLast) =>
@@ -59,8 +58,9 @@ namespace Etl.Core
             List<List<TextLine>> scannedBatch = new();
             List<Task> extractTasks = new(_maxExtractorThread);
 
-            using (var scanner = _etl.CreateScanner(
+            using (var scanner = _etl.Start(
                 () => new StreamReader(dataFilePath),
+                sp,
                 textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks)))
                 scanner.Start(take, skip);
 

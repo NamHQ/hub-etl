@@ -10,6 +10,7 @@ namespace Etl.Core
 {
     public class Workflow
     {
+        private readonly IServiceProvider _sp;
         private readonly EtlSetting _etlSetting;
         private readonly IEtlContext _context;
         private readonly IEtlFactory _etlFactory;
@@ -19,8 +20,10 @@ namespace Etl.Core
         private List<(LoaderDef definition, ILoader instance)> _loaders = new();
         private (EtlDef definition, Etl instance) _etl;
 
-        public Workflow(EtlSetting setting, IEtlContext eltContext, IEtlFactory etlFactory, ILoaderFactory loaderFactory)
+        public Workflow(EtlSetting setting, IEtlContext eltContext, IEtlFactory etlFactory, ILoaderFactory loaderFactory, IServiceProvider sp)
         {
+            _sp = sp;
+
             _etlSetting = setting;
             _context = eltContext;
             _etlFactory = etlFactory;
@@ -41,7 +44,7 @@ namespace Etl.Core
             if (string.IsNullOrEmpty(configFilePath))
                 return this;
 
-            var (definition, instance) = _etlFactory.DirectlyLoad(configFilePath);
+            var (definition, instance) = _etlFactory.GetFrom(configFilePath);
             return SetConfig(definition, instance);
         }
 
@@ -86,7 +89,7 @@ namespace Etl.Core
 
             if (_etl.instance == null)
             {
-                var (definition, instance) = _etlFactory.Load(dataFilePath);
+                var (definition, instance) = _etlFactory.Get(dataFilePath);
                 SetConfig(definition, instance);
             }
 
@@ -95,7 +98,7 @@ namespace Etl.Core
                 _context, 
                 _loaders,
                 _events)
-                .Start(dataFilePath, take, skip);
+                .Start(dataFilePath, _sp, take, skip);
         }
     }
 }
