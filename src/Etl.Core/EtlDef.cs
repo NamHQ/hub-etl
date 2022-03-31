@@ -14,7 +14,7 @@ namespace Etl.Core
         [XmlAttribute]
         public int FlushBatch { get; set; } = 10 * 1000;
 
-        public ExtractionDef Extraction { get; set; } = new();
+        public ExtractorDef Extraction { get; set; } = new();
 
         public TransformDef Transformation { get; set; } = new();
 

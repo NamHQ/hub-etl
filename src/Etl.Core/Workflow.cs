@@ -25,7 +25,7 @@ namespace Etl.Core
         private int _scanBatch;
         private int _flushBatch;
         private List<(ILoader loader, LoaderDef args)> _loaders = new();
-        private EtlExecutor _executor;
+        private Etl _etl;
         private SequenceFlushBuffer _sequenceFlushBuffer;
 
         private int _totalRecords;
@@ -61,7 +61,7 @@ namespace Etl.Core
             return SetConfig(definition, executor);
         }
 
-        public Workflow SetConfig(EtlDef definition, EtlExecutor executor = null)
+        public Workflow SetConfig(EtlDef definition, Etl executor = null)
         {
             if (definition != null)
             {
@@ -69,7 +69,7 @@ namespace Etl.Core
                 _flushBatch = definition.FlushBatch;
                 _loaders = _loaderFactory.Get(definition.Loaders) ?? new();
                 _transformResult = new TransformResult(definition.FlushBatch);
-                _executor = executor ?? new EtlExecutor(definition);
+                _etl = executor ?? new Etl(definition);
             }
 
             return this;
@@ -103,7 +103,7 @@ namespace Etl.Core
             if (!File.Exists(dataFilePath))
                 throw new Exception($"Not existed data file '{dataFilePath}'.");
 
-            if (_executor == null)
+            if (_etl == null)
             {
                 var (definition, executor) = _etlDefFactory.Load(dataFilePath);
                 SetConfig(definition, executor);
@@ -120,7 +120,7 @@ namespace Etl.Core
             List<List<TextLine>> scannedBatch = new();
             List<Task> extractTasks = new(_maxExtractorThread);
 
-            using (var scanner = _executor.CreateScanner(
+            using (var scanner = _etl.CreateScanner(
                 () => new StreamReader(dataFilePath),
                 textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks)))
                 scanner.Start(take, skip);
@@ -158,14 +158,12 @@ namespace Etl.Core
             {
                 try
                 {
-                    _executor.RemoveComments(textLines);
-
                     _events?.OnScanned?.Invoke(textLines);
 
-                    var record = _executor.Extract(textLines, _events);
+                    var record = _etl.Extract(textLines, _events);
                     _events?.OnExtracted?.Invoke(record);
 
-                    var result = _executor.Transform(record, _context);
+                    var result = _etl.Transform(record, _context);
                     _events?.OnTransformed?.Invoke(result);
 
                     batch.Append(result);
@@ -196,10 +194,10 @@ namespace Etl.Core
             if (isFirst)
             {
                 isFirst = false;
-                _loaders.ForEach(e => e.loader.Initalize(e.args, dataFile, _executor.AllFields));
+                _loaders.ForEach(e => e.loader.Initalize(e.args, dataFile, _etl.AllFields));
             }
 
-            var batch = _executor.ApplyMassage(result.Items);
+            var batch = _etl.ApplyMassage(result.Items);
             var batchResult = new BatchResult
             {
                 Batch = batch,
@@ -225,7 +223,7 @@ namespace Etl.Core
                     if ((count % 1000) == 0)
                     {
                         count = 0;
-                        Console.WriteLine("Sleep...");
+                        Console.WriteLine("Buffer is full, Loaders are processing...");
                     }
                     count += 200;
                     Thread.Sleep(200);

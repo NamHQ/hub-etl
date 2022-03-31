@@ -15,33 +15,34 @@ namespace Etl.Core.Transformation
         private const string NAMESPACE = "tempNameSpace";
         private const string CLASS = "tempClass";
         private const string METHOD = "Execute";
-        private readonly Assembly _transformHAssembly;
+        private readonly Assembly _transformAssembly;
         private readonly GroupField _collectionField;
 
+        private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _massageInstance;
         public IReadOnlyCollection<TransformField> AllFields => _collectionField.Fields;
 
         public Transformer(TransformDef generator, LayoutDef layout)
         {
-            _transformHAssembly = CompileCSharpCode(generator.Massage);
+            _transformAssembly = CompileCSharpCode(generator.Massage);
             _collectionField = new GroupField { Fields = generator.Fields };
 
             MakeSureMergeParserFields(_collectionField, layout);
         }
 
-        public TransformResult ExtractFields(IDictionary<string, object> record, IEtlContext context)
-            => _collectionField.Transform(record, context) as TransformResult;
-
-        public Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> CreateTranformInstance()
+        public void Reset()
         {
-            if (_transformHAssembly == null)
-                return null;
-
-            var instance = _transformHAssembly.CreateInstance($"{NAMESPACE}.{CLASS}");
-            var method = instance.GetType().GetMethod(METHOD);
-            return batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
+            if (_transformAssembly != null)
+            {
+                var instance = _transformAssembly.CreateInstance($"{NAMESPACE}.{CLASS}");
+                var method = instance.GetType().GetMethod(METHOD);
+                _massageInstance = batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
+            }
         }
 
-        public static void MakeSureMergeParserFields(GroupField mapFields, LayoutDef layout)
+        public TransformResult Execute(IDictionary<string, object> record, IEtlContext context)
+            => _collectionField.Transform(record, context) as TransformResult;
+
+        private static void MakeSureMergeParserFields(GroupField mapFields, LayoutDef layout)
         {
             List<TransformField> parseFields = new();
             GetParserFieldsRecursive(layout, parseFields);

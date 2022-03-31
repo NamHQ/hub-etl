@@ -9,14 +9,14 @@ namespace Etl.Core
 {
     public interface IEtlFactory
     {
-        (EtlDef definition, EtlExecutor executor) Load(string dataFilePath);
+        (EtlDef definition, Etl executor) Load(string dataFilePath);
 
-        (EtlDef definition, EtlExecutor executor) DirectlyLoad(string configFilePath);
+        (EtlDef definition, Etl executor) DirectlyLoad(string configFilePath);
     }
 
     public class EtlFactory : IEtlFactory
     {
-        private readonly Dictionary<string, (EtlDef definition, EtlExecutor executor)> _caches = new();
+        private readonly Dictionary<string, (EtlDef definition, Etl executor)> _caches = new();
         private readonly ConfigFilesSetting _setting;
         private readonly List<(Regex matcher, string configFile)> _matchers = new();
         private readonly XmlAttributeOverrides _loaderDefsAttrOverrides;
@@ -39,7 +39,7 @@ namespace Etl.Core
             serializer.Serialize(stream, config);
         }
 
-        public (EtlDef definition, EtlExecutor executor) Load(string dataFilePath)
+        public (EtlDef definition, Etl executor) Load(string dataFilePath)
         {
             dataFilePath = dataFilePath.ToLower();
             foreach (var (matcher, configFile) in _matchers)
@@ -54,7 +54,7 @@ namespace Etl.Core
             return DirectlyLoad(dataFilePath);
         }
 
-        public (EtlDef definition, EtlExecutor executor) DirectlyLoad(string configFilePath)
+        public (EtlDef definition, Etl executor) DirectlyLoad(string configFilePath)
         {
             if (!_caches.TryGetValue(configFilePath, out var cache))
                 lock (_caches)
@@ -79,7 +79,7 @@ namespace Etl.Core
 
                         using var stream = new FileStream(configFilePath, FileMode.Open);
                         var def = (EtlDef)serializer.Deserialize(stream);
-                        var result = (def, new EtlExecutor(def));
+                        var result = (def, new Etl(def));
                         _caches[configFilePath] = result;
 
                         return result;

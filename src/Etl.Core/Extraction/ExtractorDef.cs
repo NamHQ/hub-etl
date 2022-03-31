@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Extraction
 {
-    public class ExtractionDef
+    public class ExtractorDef
     {
         [XmlAttribute]
         public string LayoutStart { get; set; }
