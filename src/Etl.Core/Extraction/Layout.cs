@@ -75,12 +75,13 @@ namespace Etl.Core.Extraction
             return next;
         }
 
-        public IDictionary<string, object> Parse(List<TextLine> textLines, ICompilerEvent events)
+        public ExtractedRecord ParseOneRecord(List<TextLine> textLines, ICompilerEvent events)
         {
-            var result = new Dictionary<string, object>();
-            var textBlock = new TextBlock(textLines);
+            var start = (0,0);
+            var end = (textLines.Count, int.MaxValue);
+            var result = new ExtractedRecord(new TextBlock(textLines), start, end);
 
-            DetectChildrenLayouts((0, 0), (textBlock.Count, int.MaxValue), textBlock, events, result);
+            DetectChildrenLayouts(start, end, events, result);
 
             return result;
         }
@@ -88,9 +89,8 @@ namespace Etl.Core.Extraction
         private (int row, int column) DetectChildrenLayouts(
             (int row, int column) start,
             (int row, int column) end,
-            TextBlock block,
             ICompilerEvent events,
-            IDictionary<string, object> result)
+            ExtractedRecord result)
         {
             var line = start.row;
             var column = start.column;
@@ -98,13 +98,13 @@ namespace Etl.Core.Extraction
             if (_layout.Direction == LayoutDirection.Row)
                 _children?.ForEach(child =>
                 {
-                    var next = child.DetectDataField((line, start.column), end, block, events, result);
+                    var next = child.DetectDataField((line, start.column), end, events, result);
                     line = next.row;
                 });
             else
                 _children?.ForEach(child =>
                 {
-                    var next = child.DetectDataField((start.row, column), end, block, events, result);
+                    var next = child.DetectDataField((start.row, column), end, events, result);
                     column = next.column;
                     if (line < next.row)
                         line = next.row;
@@ -116,18 +116,18 @@ namespace Etl.Core.Extraction
         private (int row, int column) DetectDataField(
             (int row, int column) start,
             (int row, int column) end,
-            TextBlock block,
             ICompilerEvent events,
-            IDictionary<string, object> result)
+            ExtractedRecord result)
         {
-            var records = _layout.Repeat ? new List<IDictionary<string, object>>() : null;
+            var block = result.Block;
             var cursor = start;
+            var array = _layout.Repeat ? new ExtractedArray(start, end) : null;
 
             do
             {
                 events?.OnExtracting?.Invoke(_layout, _hierarchy, block, cursor, null, null, null, null);
 
-                var record = _layout.Repeat ? new Dictionary<string, object>() : result;
+                var record = _layout.Repeat ? new ExtractedRecord(block, cursor, end) : result;
 
                 var newStart = GetFromPosition(cursor, end, block);
                 if (newStart == STOP)
@@ -138,19 +138,19 @@ namespace Etl.Core.Extraction
 
                 var (to, newEnd) = GetToPosition(newStart, end, block);
 
-                ExtractedResult value = default;
+                ExtractedInfo value = default;
                 if (!_layout.Repeat && _children == null && !string.IsNullOrEmpty(_layout.DataField))
                 {
-                    value = GetValue(block, newStart, to, end);
+                    value = GetValue(newStart, to, end);
                     record[_layout.DataField] = value;
                 }
 
                 events?.OnExtracting?.Invoke(_layout, _hierarchy, block, null, newStart, newEnd, _layout.DataField, value);
 
-                var (line, column) = _children == null ? newStart : DetectChildrenLayouts(newStart, newEnd, block, events, record);
+                var (line, column) = _children == null ? newStart : DetectChildrenLayouts(newStart, newEnd, events, record);
 
-                if (records != null && record.Count > 0)
-                    records.Add(record);
+                if (array != null && record.Count > 0)
+                    array.Add(record);
 
                 cursor = (
                     Math.Max(to.row, line),
@@ -160,11 +160,11 @@ namespace Etl.Core.Extraction
             }
             while (_layout.Repeat);
 
-            if (records?.Count > 0)
+            if (array != null && array.Count > 0)
             {
                 if (string.IsNullOrEmpty(_layout.DataField))
                     throw new Exception($"Repeat Layout expects {nameof(_layout.DataField)}");
-                result[_layout.DataField] = records;
+                result[_layout.DataField] = array;
             }
 
             return cursor;
@@ -260,7 +260,7 @@ namespace Etl.Core.Extraction
             return ((row, column), newEnd);
         }
 
-        private ExtractedResult GetValue(TextBlock block, (int row, int col) from, (int row, int col) to, (int row, int col) end)
+        private ExtractedInfo GetValue((int row, int col) from, (int row, int col) to, (int row, int col) end)
         {
             if (_isLast && from == to)
             {
@@ -270,7 +270,7 @@ namespace Etl.Core.Extraction
                     to.col = end.col;
             }
 
-            return new ExtractedResult(block, from, to);
+            return new ExtractedInfo(from, to);
         }
     }
 }

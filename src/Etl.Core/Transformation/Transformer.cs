@@ -16,40 +16,41 @@ namespace Etl.Core.Transformation
         private const string CLASS = "tempClass";
         private const string METHOD = "Execute";
         private readonly Assembly _massageAssembly;
-        private readonly GroupField _collectionField;
+        private readonly GroupFieldDef _gropuFieldDef;
 
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _applyMassage;
-        public IReadOnlyCollection<TransformField> AllFields => _collectionField.Fields;
+        public IReadOnlyCollection<TransformFieldDef> AllFields { get; }
 
         public Transformer(TransformDef transformDef, LayoutDef layoutDef)
         {
             _massageAssembly = CompileCSharpCode(transformDef.Massage);
-            _collectionField = new GroupField { Fields = transformDef.Fields };
+            _gropuFieldDef = new GroupFieldDef { Fields = transformDef.Fields };
 
-            MakeSureMergeParserFields(_collectionField, layoutDef);
+            MakeSureMergeParserFields(_gropuFieldDef, layoutDef);
+
+            AllFields = _gropuFieldDef.Fields;
         }
 
-        public void Initialize(IServiceProvider sp)
+        public Func<ExtractedRecord, TransformResult> CreateInstance(IServiceProvider sp)
         {
-            _collectionField.Initialize(sp);
-
             if (_massageAssembly != null)
             {
                 var instance = _massageAssembly.CreateInstance($"{NAMESPACE}.{CLASS}");
                 var method = instance.GetType().GetMethod(METHOD);
                 _applyMassage = batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
             }
-        }
 
-        public TransformResult Execute(IDictionary<string, object> record, IEtlContext context)
-            => _collectionField.Transform(record, context) as TransformResult;
+            var groupField = _gropuFieldDef.CreateInstance(sp);
+
+            return record => groupField.Transform(record) as TransformResult;
+        }
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
             => _applyMassage?.Invoke(batch) ?? batch;
 
-        private static void MakeSureMergeParserFields(GroupField mapFields, LayoutDef layout)
+        private static void MakeSureMergeParserFields(GroupFieldDef mapFields, LayoutDef layout)
         {
-            List<TransformField> parseFields = new();
+            List<TransformFieldDef> parseFields = new();
             GetParserFieldsRecursive(layout, parseFields);
 
             if (mapFields.Fields.Count == 0)
@@ -58,7 +59,7 @@ namespace Etl.Core.Transformation
                 MergeFieldsRecursive(mapFields.Fields, parseFields, mapFields.IgnoreParserFields);
         }
 
-        private static void GetParserFieldsRecursive(LayoutDef layout, List<TransformField> parserFields)
+        private static void GetParserFieldsRecursive(LayoutDef layout, List<TransformFieldDef> parserFields)
         {
             if (layout == null)
                 return;
@@ -67,40 +68,46 @@ namespace Etl.Core.Transformation
             {
                 if (layout.Repeat)
                 {
-                    ArrayField arr = new() { ParserField = layout.DataField };
+                    ArrayFieldDef arr = new() { ParserField = layout.DataField };
                     parserFields.Add(arr);
                     parserFields = arr.Fields;
                 }
                 else
-                    parserFields.Add(new StringField { ParserField = layout.DataField });
+                    parserFields.Add(new StringFieldDef { ParserField = layout.DataField });
             }
 
             if (layout.Children != null && layout.Children.Count > 0)
                 layout.Children.ForEach(e => GetParserFieldsRecursive(e, parserFields));
         }
 
-        private static void MergeFieldsRecursive(List<TransformField> mapFields, List<TransformField> parserFields, HashSet<string> ignoreParserFields)
+        private static void MergeFieldsRecursive(List<TransformFieldDef> mapFields, List<TransformFieldDef> parserFields, HashSet<string> ignoreParserFields)
         {
             var dictionary = mapFields.ToDictionary(e =>
             {
-                if (string.IsNullOrEmpty(e.LazyDbField.Value))
+                var dataField = GetFirstNotEmpty(e.Field, e.ParserField);
+                if (string.IsNullOrEmpty(dataField))
                     throw new Exception($"Fields in {nameof(TransformDef)} expect {nameof(e.Field)} or {nameof(e.ParserField)}");
 
-                return e.LazyDbField.Value;
+                return dataField;
             });
 
-            foreach (var field in parserFields.Where(x => !ignoreParserFields.Contains(x.LazyParserField.Value)))
-                if (!dictionary.TryGetValue(field.LazyParserField.Value, out TransformField mapField))
+            foreach (var field in parserFields.Where(x => !ignoreParserFields.Contains(x.ParserField)))
+            {
+                var parserField = GetFirstNotEmpty(field.ParserField, field.Field);
+                if (!dictionary.TryGetValue(parserField, out TransformFieldDef mapField))
                 {
                     mapFields.Add(field);
                 }
-                else if (field is ArrayField parserArray)
+                else if (field is ArrayFieldDef parserArray)
                 {
-                    if (mapField is not ArrayField mapArray)
-                        throw new Exception($"Parser array field {field.LazyParserField.Value} does not match defined field {mapField.LazyParserField.Value} {mapField.GetType().Name}");
-
+                    if (mapField is not ArrayFieldDef mapArray)
+                    {
+                        var mapParserField = GetFirstNotEmpty(mapField.ParserField, mapField.Field);
+                        throw new Exception($"Parser array field {parserField} does not match defined field {mapParserField} {mapField.GetType().Name}");
+                    }
                     MergeFieldsRecursive(mapArray.Fields, parserArray.Fields, mapArray.IgnoreParserFields);
                 }
+            }
         }
 
         private static Assembly CompileCSharpCode(MassageDataCSharpCode transform)
@@ -115,6 +122,15 @@ namespace Etl.Core.Transformation
             sb.Append("}}}");
 
             return CShapCompiler.Compile(sb.ToString());
+        }
+
+        private static string GetFirstNotEmpty(params string[] values)
+        {
+            foreach(var e in values)
+                if (!string.IsNullOrWhiteSpace(e))
+                    return e;
+
+            return null;
         }
     }
 }

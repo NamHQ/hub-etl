@@ -8,6 +8,7 @@ using Etl.Core.Load;
 using Etl.Core.Scanner;
 using System.IO;
 using Etl.Core.Settings;
+using Etl.Core.Extraction;
 
 namespace Etl.Core
 {
@@ -17,7 +18,6 @@ namespace Etl.Core
         private readonly int _maxBatchBuffer;
         private readonly int _scanBatch;
         private readonly int _flushBatch;
-        private readonly IEtlContext _context;
         private readonly ICompilerEvent _events;
         private readonly List<(LoaderDef definition, ILoader instance)> _loaders = new();
         private readonly Etl _etl;
@@ -28,9 +28,9 @@ namespace Etl.Core
         private TransformResult _transformResult;
         private DateTime _start = DateTime.Now;
         private SequenceFlushBuffer _sequenceFlushBuffer;
+        private Func<ExtractedRecord, TransformResult> _transformInstance;
 
         public WorkflowExecutor(EtlSetting etlSetting, EtlDef etlDef, Etl etl,
-            IEtlContext context,
             List<(LoaderDef definition, ILoader instance)> loaders,
             ICompilerEvent events)
         {
@@ -40,7 +40,6 @@ namespace Etl.Core
             _flushBatch = etlDef.FlushBatch;
             _etl = etl;
             _loaders = loaders;
-            _context = context;
             _events = events;
             _transformResult = new TransformResult(_flushBatch);
         }
@@ -58,11 +57,14 @@ namespace Etl.Core
             List<List<TextLine>> scannedBatch = new();
             List<Task> extractTasks = new(_maxExtractorThread);
 
-            using (var scanner = _etl.Start(
+            var (scanner, transformInstance) = _etl.Start(
                 () => new StreamReader(dataFilePath),
                 sp,
-                textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks)))
-                scanner.Start(take, skip);
+                textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks));
+
+            _transformInstance = transformInstance;
+            scanner.Start();
+            scanner.Dispose();
 
             Task.WaitAll(extractTasks.ToArray());
 
@@ -102,7 +104,7 @@ namespace Etl.Core
                     var record = _etl.Extract(textLines, _events);
                     _events?.OnExtracted?.Invoke(record);
 
-                    var result = _etl.Transform(record, _context);
+                    var result = _transformInstance(record);
                     _events?.OnTransformed?.Invoke(result);
 
                     batch.Append(result);

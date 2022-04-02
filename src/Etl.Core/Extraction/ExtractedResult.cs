@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Etl.Core.Extraction
 {
-    public class ExtractedResult
+    public class ExtractedValue
     {
         private readonly Lazy<string> _lazyValue;
         private readonly Lazy<(string position, IEnumerable<string> lines)> _lazyInfo;
@@ -13,7 +13,7 @@ namespace Etl.Core.Extraction
         public string Position => _lazyInfo.Value.position;
         public IEnumerable<string> Lines => _lazyInfo.Value.lines;
 
-        public ExtractedResult(TextBlock block, (int row, int col) from, (int row, int col) to)
+        public ExtractedValue(TextBlock block, (int row, int col) from, (int row, int col) to)
         {
             _lazyValue = new Lazy<string>(() => block.GetValue(from, to));
 

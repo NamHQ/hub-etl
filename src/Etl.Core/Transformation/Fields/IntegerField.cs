@@ -1,35 +1,27 @@
-﻿using Etl.Core.Extraction;
-using System.Xml.Serialization;
+﻿using Etl.Core.Transformation.Actions;
+using System;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class IntegerField : NumberField<int?>
+
+    public class IntegerAction : TransformAction<int?>
     {
-        [XmlAttribute]
-        public int Max { get; set; } = int.MaxValue;
-
-        [XmlAttribute]
-        public int Min { get; set; } = int.MinValue;
-
-        protected override int? Convert(string text, ExtractedResult extractedResult, IEtlContext context)
+        protected override int? Execute(object input, ActionArgs args)
         {
-            try
-            {
-                return string.IsNullOrWhiteSpace(text) ? null : System.Convert.ToInt32(text);
-            }
-            catch
-            {
-                throw Stop(extractedResult, "Value");
-            }
-        }
+            var text = input as string;
 
-        protected override void Validate(int? value, ExtractedResult extractedResult, IEtlContext context)
-        {
-            if (Min != int.MinValue && value < Min)
-                throw Stop(extractedResult, nameof(Min));
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+            
+            if (text[^1] == '-')
+                text =$"-{text[0..^1]}";
 
-            if (Max != int.MaxValue && value > Max)
-                throw Stop(extractedResult, nameof(Max));
+            return Convert.ToInt32(text);
         }
+    }
+
+    public class IntegerFieldDef : PipeLineFieldDef
+    {
+        protected override TransformActionDef MainActionDef => new TransformActionDef<IntegerAction>();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Etl.Core.Load;
 using Etl.Core.Settings;
+using Etl.Core.Transformation.Fields;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -30,6 +31,9 @@ namespace Etl.Core
             services.AddTransient<IEtlContext>(sp => etlContext);
             
             services.AddTransient<Workflow>();
+
+            services.AddSingleton<IntegerAction>();
+            services.AddSingleton<StringAction>();
 
             return services;
         }

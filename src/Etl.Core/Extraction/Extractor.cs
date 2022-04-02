@@ -57,7 +57,7 @@ namespace Etl.Core.Extraction
             }
         }
 
-        public IDictionary<string, object> Execute(List<TextLine> textLines, ICompilerEvent events)
-            => _layout.Parse(textLines, events);
+        public ExtractedRecord Execute(List<TextLine> textLines, ICompilerEvent events)
+            => _layout.ParseOneRecord(textLines, events);
     }
 }

@@ -1,17 +1,30 @@
 ﻿using Etl.Core.Extraction;
+using Etl.Core.Transformation.Actions;
 using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class NumberField<T> : DataField<T>
+    public class FormatNumberActionDef : TransformActionDef<FormatNumberAction, FormatNumberActionDef>
     {
-        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, IEtlContext context)
-        {
-            var raw = base.Modify(extractedResult, record, context);
+    }
 
-            return base.ModifyAction == null && !string.IsNullOrEmpty(raw) && raw[^1] == '-'
-                ? $"-{raw.Substring(0, raw.Length -1)}"
-                : raw;
+    public class FormatNumberAction : TransformAction<FormatNumberAction, FormatNumberActionDef>
+    {
+        public override object Execute(object input, ActionArgs args)
+        {
+            var text = input?.ToString();
+
+            if (text == null)
+                return null;
+
+            if (text[^1] == '-')
+                text = $"-{text[0..^1]}";
+            return text;
         }
+    }
+
+    public class FormatNumberField : DataField<double?>
+    {
+        protected override TransformActionDef MainActionDef => new FormatNumberActionDef();
     }
 }

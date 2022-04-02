@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Etl.Core.Extraction;
+using System.Collections.Generic;
 
 namespace Etl.Core.Scanner
 {
@@ -15,6 +16,9 @@ namespace Etl.Core.Scanner
             _lines = lines;
             Count = _lines.Count;
         }
+
+        public string GetValue(IExtractedInfo extractedInfo)
+            => GetValue(extractedInfo.From, extractedInfo.To);
 
         public string GetValue(int row, int startColumn, int length)
             => GetValue(_lines[row].Text, startColumn, length);

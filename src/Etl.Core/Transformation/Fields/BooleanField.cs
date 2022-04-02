@@ -1,28 +1,24 @@
-﻿using Etl.Core.Extraction;
+﻿using Etl.Core.Transformation.Actions;
 using System;
-using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class BooleanField : DataField<bool?>
+    public class BooleanAction : TransformAction<bool?>
     {
-        public BooleanField()
+        protected override bool? Execute(object input, ActionArgs args)
         {
+            var text = input?.ToString();
+
+            return string.IsNullOrEmpty(input?.ToString())
+                ?  null
+                : "on".Equals(text, StringComparison.OrdinalIgnoreCase)
+                   || "true".Equals(text, StringComparison.OrdinalIgnoreCase)
+                   || System.Convert.ToBoolean(input);
         }
+    }
 
-        protected override string Modify(ExtractedResult extractedResult, IDictionary<string, object> record, IEtlContext context)
-        {
-            var text = base.Modify(extractedResult, record, context);
-
-            if (ModifyAction == null && !string.IsNullOrWhiteSpace(text))
-                return text == "1"
-                    || "on".Equals(text, StringComparison.OrdinalIgnoreCase)
-                    || "true".Equals(text, StringComparison.OrdinalIgnoreCase) ? "True" : "False";
-
-            return text;
-        }
-
-        protected override bool? Convert(string text, ExtractedResult extractedResult, IEtlContext context)
-            => string.IsNullOrEmpty(text) ? null : System.Convert.ToBoolean(text);
+    public class BooleanFieldDef : PipeLineFieldDef
+    {
+        protected override TransformActionDef MainActionDef => new TransformActionDef<BooleanAction>();
     }
 }

@@ -24,7 +24,7 @@ namespace Etl.Storage
             _configuration = configuration;
         }
 
-        protected override void Initalize(MongoDbLoaderDef args, string inputFile, IReadOnlyCollection<TransformField> fields)
+        protected override void Initalize(MongoDbLoaderDef args, string inputFile, IReadOnlyCollection<TransformFieldDef> fields)
         {
             _args = args;
             _lazyDb = new Lazy<IMongoDatabase>(() =>

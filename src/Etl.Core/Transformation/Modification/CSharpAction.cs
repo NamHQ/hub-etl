@@ -11,7 +11,7 @@ namespace Etl.Core.Transformation.Modification
         private Func<IDictionary<string, object>, string, string> _executor;
         public string Code { get; set; }
 
-        public override string Execute(TransformField field, string rawValue, IDictionary<string, object> record)
+        public override string Execute(TransformFieldDef field, string rawValue, IDictionary<string, object> record)
         {
             if (string.IsNullOrWhiteSpace(Code))
                 throw new Exception($"{nameof(CSharpAction)} expects {nameof(Code)} not empty.");

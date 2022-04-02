@@ -10,7 +10,7 @@ namespace Etl.Storage
         private Dictionary<string, int> _fieldOrders;
         private string _delimiter;
 
-        protected override void Initalize(CsvLoaderDef args, string inputFile, IReadOnlyCollection<TransformField> fields)
+        protected override void Initalize(CsvLoaderDef args, string inputFile, IReadOnlyCollection<TransformFieldDef> fields)
         {
             //args must be immutable, it is singleton.
             base.Initalize(args, inputFile, fields);

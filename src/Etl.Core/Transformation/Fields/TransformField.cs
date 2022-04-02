@@ -1,37 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Xml.Serialization;
+﻿using Etl.Core.Extraction;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class TransformField
+    public interface ITransformField
     {
-        [XmlAttribute]
-        public string Field { get; set; }
-        internal readonly Lazy<string> LazyDbField;
+        string DataField { get; set; }
+        string ParserField { get; set; }
 
-        [XmlAttribute]
-        public string ParserField { get; set; }
-        internal readonly Lazy<string> LazyParserField;
-
-        [XmlAttribute]
-        public bool Required { get; set; }
-
-        protected TransformField()
-        {
-            LazyDbField = new Lazy<string>(() => string.IsNullOrWhiteSpace(Field) ? ParserField : Field);
-            LazyParserField = new Lazy<string>(() => string.IsNullOrWhiteSpace(ParserField) ? Field : ParserField);
-        }
-
-        public virtual void Initialize(IServiceProvider sp) { }
-        public abstract object Transform(IDictionary<string, object> record, IEtlContext context);
+        bool Required { get; set; }
+        object Transform(ExtractedRecord record);
     }
 
-    public abstract class TransformField<T> : TransformField
+    public abstract class TransformField : ITransformField
     {
-        public override object Transform(IDictionary<string, object> record, IEtlContext context)
-           => Start(record, context);
+        public string DataField { get; set; }
+        public string ParserField { get; set; }
+        public bool Required { get; set; }
+        public abstract object Transform(ExtractedRecord record);
+    }
 
-        protected abstract T Start(IDictionary<string, object> record, IEtlContext context);
+    public abstract class TransformField<T> : ITransformField
+    {
+        public string DataField { get; set; }
+        public string ParserField { get; set; }
+        public bool Required { get; set; }
+
+        object ITransformField.Transform(ExtractedRecord record)
+            => Transform(record);
+        protected abstract T Transform(ExtractedRecord record);
     }
 }

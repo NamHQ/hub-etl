@@ -13,7 +13,7 @@ namespace Etl.Core
     {
         private readonly Extractor _extractor;
         private readonly Transformer _transformer;
-        public IReadOnlyCollection<TransformField> AllFields => _transformer.AllFields;
+        public IReadOnlyCollection<TransformFieldDef> AllFields => _transformer.AllFields;
 
         public Etl(EtlDef etfDef)
         {
@@ -21,18 +21,18 @@ namespace Etl.Core
             _transformer = new Transformer(etfDef.Transformation, etfDef.Extraction.Layout);
         }
 
-        public Scanner.Scanner Start(Func<StreamReader> getStreamReader, IServiceProvider sp, Action<List<TextLine>> flush)
+        public (
+            Scanner.Scanner scaner,
+            Func<ExtractedRecord, TransformResult> transformInstance)
+            Start(Func<StreamReader> getStreamReader, IServiceProvider sp, Action<List<TextLine>> flush)
         {
-            _transformer.Initialize(sp);
-
-            return _extractor.CreateScanner(getStreamReader, flush);
+            return (
+                _extractor.CreateScanner(getStreamReader, flush),
+                _transformer.CreateInstance(sp));
         }
 
-        public IDictionary<string, object> Extract(List<TextLine> textLines, ICompilerEvent events)
+        public ExtractedRecord Extract(List<TextLine> textLines, ICompilerEvent events)
             => _extractor.Execute(textLines, events);
-
-        public TransformResult Transform(IDictionary<string, object> record, IEtlContext context)
-            => _transformer.Execute(record, context);
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
             => _transformer.ApplyMassage(batch);

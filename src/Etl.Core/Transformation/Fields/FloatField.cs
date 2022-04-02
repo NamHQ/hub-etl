@@ -1,35 +1,26 @@
-﻿using Etl.Core.Extraction;
-using System.Xml.Serialization;
+﻿using Etl.Core.Transformation.Actions;
+using System;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class FLoatField : NumberField<double?>
+    public class FloatAction : TransformAction<double?>
     {
-        [XmlAttribute]
-        public double Max { get; set; } = double.MaxValue;
-
-        [XmlAttribute]
-        public double Min { get; set; } = double.MinValue;
-
-        protected override double? Convert(string text,  ExtractedResult extractedResult, IEtlContext context)
+        protected override double? Execute(object input, ActionArgs args)
         {
-            try
-            {
-                return string.IsNullOrWhiteSpace(text) ? null : System.Convert.ToDouble(text);
-            }
-            catch
-            {
-                throw Stop(extractedResult, "Value");
-            }
-        }
+            var text = input?.ToString();
 
-        protected override void Validate(double? value, ExtractedResult extractedResult, IEtlContext context)
-        {
-            if (Min != double.MinValue && value < Min)
-                throw Stop(extractedResult, nameof(Min));
+            if (text == null)
+                return null;
 
-            if (Max != double.MaxValue && value > Max)
-                throw Stop(extractedResult, nameof(Max));
+            if (text[^1] == '-')
+                text = $"-{text[0..^1]}";
+
+            return Convert.ToDouble(text);
         }
+    }
+
+    public class FloatFieldDef : PipeLineFieldDef
+    {
+        protected override TransformActionDef MainActionDef => new TransformActionDef<FloatAction>();
     }
 }

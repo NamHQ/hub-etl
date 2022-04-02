@@ -29,7 +29,7 @@ namespace Etl.Core.Transformation.Modification
             _regexEnd = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(End) ? null : new Regex(End, RegexOptions.Compiled));
         }
 
-        public override string Execute(TransformField field, string rawValue, IDictionary<string, object> record)
+        public override string Execute(TransformFieldDef field, string rawValue, IDictionary<string, object> record)
         {
             if (rawValue == null)
                 return null;

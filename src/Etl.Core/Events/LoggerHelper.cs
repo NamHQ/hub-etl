@@ -47,7 +47,7 @@ namespace Etl.Core.Events
             int hierachy,
             TextBlock block,
             (int row, int column)? start, (int row, int column)? from, (int row, int column)? to,
-            string dataField = null, ExtractedResult result = null)
+            string dataField = null, IExtractedInfo result = null)
         {
             if (block.Count == 0)
                 return;
@@ -79,7 +79,7 @@ namespace Etl.Core.Events
                     sb.Append($", To(R.{block[Math.Min(block.Count - 1, to.Value.row)].Row},{WriteColumn(to)})");
 
                 if (!string.IsNullOrEmpty(dataField))
-                    sb.Append($" ===> Field({dataField},{result?.Value})");
+                    sb.Append($" ===> Field({dataField},{(result == null ? "NULL" : block.GetValue(result.From, result.To))})");
 
                 writer(sb.ToString());
             }
@@ -101,8 +101,40 @@ namespace Etl.Core.Events
                 => pos == null || pos.Value.column == int.MaxValue ? "~" : pos.Value.column.ToString();
         }
 
-        public static void OnExtracted(Action<string> writer, IDictionary<string, object> record)
-            => writer(BuildMessage("\nEXTRACT RESULT:\n____________\n", record));
+        public static void OnExtracted(Action<string> writer, ExtractedRecord record)
+            => writer(LogExtractedRecord("\nEXTRACT RESULT:\n____________\n", record));
+        public static string LogExtractedRecord(string message, ExtractedRecord record)
+        {
+            var sb = new StringBuilder(message);
+            foreach (var e in record)
+                LogExtractedValue("", e, record.Block, sb);
+
+            return sb.ToString();
+        }
+
+        public static void LogExtractedValue(string pad, KeyValuePair<string, IExtractedInfo> field, TextBlock block, StringBuilder sb)
+        {
+            var space = "    ";
+            if (field.Value is ExtractedRecord group)
+            {
+                sb.AppendLine($"{pad}{field.Key} :");
+                foreach (var f in group)
+                    LogExtractedValue(pad + space, f, block, sb);
+            }
+            else if (field.Value is ExtractedArray array)
+            {
+                sb.AppendLine($"{pad}{field.Key} :");
+                foreach (var record in array)
+                    if (record.Count > 0)
+                    {
+                        sb.AppendLine(pad + space + "---------------");
+                        foreach (var f in record)
+                            LogExtractedValue(pad + space, f, block, sb);
+                    }
+            }
+            else
+                sb.AppendLine($"{pad}{field.Key} : {block.GetValue(field.Value)}");
+        }
 
         public static void OnTransformed(Action<string> writer, TransformResult result)
         {
@@ -120,6 +152,8 @@ namespace Etl.Core.Events
 
         public static void OnError(Action<string, Exception> writer, string message, Exception exception)
             => writer(message, exception);
+
+        
 
         public static string BuildMessage(string message, IDictionary<string, object> record)
         {
