@@ -12,7 +12,7 @@ namespace Etl.Core.Transformation.Fields
     public abstract class PipeLineField : TransformField
     {
         [XmlElement("Actions")]
-        public List<TransformAction> ActionDefs { get; set; } = new();
+        public List<TransformAction> Actions { get; set; } = new();
 
         protected abstract TransformAction MainAction { get; }
 
@@ -20,7 +20,7 @@ namespace Etl.Core.Transformation.Fields
         {
             var instance = new PipeLineFieldInst
             {
-                PipeLine = new List<TransformAction>(ActionDefs) { MainAction }
+                PipeLine = new List<TransformAction>(Actions) { MainAction }
                     .OrderBy(e => e.Order)
                     .Select(e => e.CreateInstance(sp))
                     .ToList()
@@ -40,7 +40,7 @@ namespace Etl.Core.Transformation.Fields
             string rawValue = info == null ? null : record.Block.GetValue(info);
 
             object value = rawValue;
-            var args = new ActionArgs();
+            var args = new ActionArgs(record);
             ITransformActionInst currentAction = default;
 
             foreach (var action in PipeLine)

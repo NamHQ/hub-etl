@@ -1,6 +1,4 @@
-﻿using Etl.Core;
-
-namespace Etl.ConsoleApp
+﻿namespace Etl.ConsoleApp
 {
     partial class Program
     {
