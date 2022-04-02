@@ -9,14 +9,14 @@ namespace Etl.Core
 {
     public interface IEtlFactory
     {
-        (EtlDef definition, Etl instance) Get(string dataFilePath);
+        (Etl definition, EtlInst instance) Get(string dataFilePath);
 
-        (EtlDef definition, Etl instance) GetFrom(string configFilePath);
+        (Etl definition, EtlInst instance) GetFrom(string configFilePath);
     }
 
     public class EtlFactory : IEtlFactory
     {
-        private readonly Dictionary<string, (EtlDef definition, Etl executor)> _caches = new();
+        private readonly Dictionary<string, (Etl definition, EtlInst instance)> _caches = new();
         private readonly ConfigFilesSetting _setting;
         private readonly List<(Regex matcher, string configFile)> _matchers = new();
         private readonly XmlAttributeOverrides _loaderDefsAttrOverrides;
@@ -31,15 +31,15 @@ namespace Etl.Core
             _loaderDefsAttrOverrides = GetAttributeOverrides(loaderDefs);
         }
 
-        public void Save(EtlDef config, string filePath)
+        public void Save(Etl config, string filePath)
         {
-            var serializer = new XmlSerializer(typeof(EtlDef), _loaderDefsAttrOverrides);
+            var serializer = new XmlSerializer(typeof(Etl), _loaderDefsAttrOverrides);
             using var stream = new StreamWriter(filePath);
 
             serializer.Serialize(stream, config);
         }
 
-        public (EtlDef definition, Etl instance) Get(string dataFilePath)
+        public (Etl definition, EtlInst instance) Get(string dataFilePath)
         {
             dataFilePath = dataFilePath.ToLower();
             foreach (var (matcher, configFile) in _matchers)
@@ -54,14 +54,14 @@ namespace Etl.Core
             return GetFrom(dataFilePath);
         }
 
-        public (EtlDef definition, Etl instance) GetFrom(string configFilePath)
+        public (Etl definition, EtlInst instance) GetFrom(string configFilePath)
         {
             if (!_caches.TryGetValue(configFilePath, out var cache))
                 lock (_caches)
                 {
                     if (!_caches.TryGetValue(configFilePath, out cache))
                     {
-                        var serializer = new XmlSerializer(typeof(EtlDef), _loaderDefsAttrOverrides);
+                        var serializer = new XmlSerializer(typeof(Etl), _loaderDefsAttrOverrides);
                         serializer.UnknownNode += (sender, e) => Console.WriteLine("Unknown Node:" + e.Name + "\t" + e.Text);
                         serializer.UnknownAttribute += (sender, e) => Console.WriteLine("Unknown Attribute " + e.Attr.Name + "='" + e.Attr.Value + "'");
                         serializer.UnknownElement += (sender, e) => Console.WriteLine("Unknown Element:" + e.Element, e);
@@ -71,8 +71,8 @@ namespace Etl.Core
                             throw new Exception($"Not found config file '{configFilePath}'");
 
                         using var stream = new FileStream(configFilePath, FileMode.Open);
-                        var def = (EtlDef)serializer.Deserialize(stream);
-                        var result = (def, new Etl(def));
+                        var def = (Etl)serializer.Deserialize(stream);
+                        var result = (def, new EtlInst(def));
                         _caches[configFilePath] = result;
 
                         return result;
@@ -89,10 +89,10 @@ namespace Etl.Core
             foreach (var e in loaderDefs)
                 attrs.XmlArrayItems.Add(new XmlArrayItemAttribute
                 {
-                    ElementName = e.Name.Replace("LoaderDef", ""),
+                    ElementName = e.Name.Replace("Loader", ""),
                     Type = e
                 });
-            attrOverrides.Add(typeof(EtlDef), nameof(EtlDef.Loaders), attrs);
+            attrOverrides.Add(typeof(Etl), nameof(Etl.Loaders), attrs);
 
             return attrOverrides;
         }

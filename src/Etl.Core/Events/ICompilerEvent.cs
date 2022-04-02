@@ -11,7 +11,7 @@ namespace Etl.Core.Events
     {
         Action<IReadOnlyCollection<TextLine>> OnScanned { get; }
 
-        Action<LayoutDef, int, TextBlock, (int row, int column)?, (int row, int column)?, (int row, int column)?, string, IExtractedInfo> OnExtracting { get; }
+        Action<Layout, int, TextBlock, (int row, int column)?, (int row, int column)?, (int row, int column)?, string, IExtractedInfo> OnExtracting { get; }
 
         Action<ExtractedRecord> OnExtracted { get; }
 

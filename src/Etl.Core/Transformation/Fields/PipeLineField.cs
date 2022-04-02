@@ -9,18 +9,18 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class PipeLineFieldDef : TransformFieldDef
+    public abstract class PipeLineField : TransformField
     {
         [XmlElement("Actions")]
-        public List<TransformActionDef> ActionDefs { get; set; } = new();
+        public List<TransformAction> ActionDefs { get; set; } = new();
 
-        protected abstract TransformActionDef MainActionDef { get; }
+        protected abstract TransformAction MainAction { get; }
 
-        protected override ITransformField OnCreateInstance(IServiceProvider sp)
+        protected override ITransformFieldInst OnCreateInstance(IServiceProvider sp)
         {
-            var instance = new PipeLineField
+            var instance = new PipeLineFieldInst
             {
-                PipeLine = new List<TransformActionDef>(ActionDefs) { MainActionDef }
+                PipeLine = new List<TransformAction>(ActionDefs) { MainAction }
                     .OrderBy(e => e.Order)
                     .Select(e => e.CreateInstance(sp))
                     .ToList()
@@ -30,9 +30,9 @@ namespace Etl.Core.Transformation.Fields
         }
     }
 
-    public class PipeLineField : TransformField
+    public class PipeLineFieldInst : TransformFieldInst
     {
-        public List<ITransformAction> PipeLine { get; set; }
+        public List<ITransformActionInst> PipeLine { get; set; }
 
         public override object Transform(ExtractedRecord record)
         {
@@ -41,7 +41,7 @@ namespace Etl.Core.Transformation.Fields
 
             object value = rawValue;
             var args = new ActionArgs();
-            ITransformAction currentAction = default;
+            ITransformActionInst currentAction = default;
 
             foreach (var action in PipeLine)
                 try

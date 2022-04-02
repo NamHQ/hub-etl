@@ -5,9 +5,9 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class GroupFieldDef : TransformFieldDef
+    public class GroupField : TransformField
     {
-        [XmlArrayItem("Integer", typeof(IntegerFieldDef))]
+        [XmlArrayItem("Integer", typeof(IntegerField))]
         //[XmlArrayItem("Float", typeof(FLoatField))]
         //[XmlArrayItem("Boolean", typeof(BooleanField))]
         //[XmlArrayItem("Date", typeof(DateField))]
@@ -16,22 +16,22 @@ namespace Etl.Core.Transformation.Fields
         //[XmlArrayItem("Encrypt", typeof(EncryptField))]
         //[XmlArrayItem("Group", typeof(GroupField))]
         //[XmlArrayItem("Array", typeof(ArrayField))]
-        public virtual List<TransformFieldDef> Fields { get; set; } = new();
+        public virtual List<TransformField> Fields { get; set; } = new();
 
         public HashSet<string> IgnoreParserFields { get; set; } = new();
 
-        protected override ITransformField OnCreateInstance(IServiceProvider sp)
+        protected override ITransformFieldInst OnCreateInstance(IServiceProvider sp)
         {
-            var result = new GroupField();
+            var result = new GroupFieldInst();
             foreach (var e in Fields)
             {
                 var item = e.CreateInstance(sp);
-                if (e is ArrayFieldDef array && array.Flat)
+                if (e is ArrayField array && array.Flat)
                 {
                     if (result.FlatArray != null)
-                        throw new Exception($"Not except multiple flat {nameof(ArrayFieldDef)} in the same hierarchy.");
+                        throw new Exception($"Not except multiple flat {nameof(ArrayField)} in the same hierarchy.");
 
-                    result.FlatArray = (ArrayField)item;
+                    result.FlatArray = (ArrayFieldInst)item;
                 }
                 else
                     result.Fields.Add(item);
@@ -41,10 +41,10 @@ namespace Etl.Core.Transformation.Fields
         }
     }
 
-    public class GroupField : TransformField<TransformResult>
+    public class GroupFieldInst : TransformFieldInst<TransformResult>
     {
-        public ArrayField FlatArray;
-        public List<ITransformField> Fields = new();
+        public ArrayFieldInst FlatArray;
+        public List<ITransformFieldInst> Fields = new();
 
         protected override TransformResult Transform(ExtractedRecord record)
         {

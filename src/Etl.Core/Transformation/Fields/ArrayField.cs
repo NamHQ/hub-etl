@@ -4,13 +4,13 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class ArrayFieldDef : GroupFieldDef
+    public class ArrayField : GroupField
     {
         [XmlAttribute]
         public bool Flat { get; set; }
     }
 
-    public class ArrayField : GroupField
+    public class ArrayFieldInst : GroupFieldInst
     {
         protected override TransformResult Transform(ExtractedRecord record)
         {

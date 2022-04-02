@@ -3,7 +3,7 @@ using System;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class FloatAction : TransformAction<double?>
+    public class FloatActionInst : TransformActionInst<double?>
     {
         protected override double? Execute(object input, ActionArgs args)
         {
@@ -19,8 +19,8 @@ namespace Etl.Core.Transformation.Fields
         }
     }
 
-    public class FloatFieldDef : PipeLineFieldDef
+    public class FloatField : PipeLineField
     {
-        protected override TransformActionDef MainActionDef => new TransformActionDef<FloatAction>();
+        protected override TransformAction MainAction => new TransformAction<FloatActionInst>();
     }
 }

@@ -1,14 +1,18 @@
-﻿namespace Etl.Core.Transformation.Actions
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
+
+namespace Etl.Core.Transformation.Actions
 {
-    public interface ITransformAction
+    public abstract class TransformAction
     {
-        object Execute(object input, ActionArgs args);
+        public int Order { get; set; }
+
+        public abstract ITransformActionInst CreateInstance(IServiceProvider sp);
     }
 
-    public abstract class TransformAction<TOutput> : ITransformAction
+    public class TransformAction<TInstance> : TransformAction where TInstance : ITransformActionInst
     {
-        object ITransformAction.Execute(object input, ActionArgs args)
-            => Execute(input, args);
-        protected abstract TOutput Execute(object input, ActionArgs args);
+        public override ITransformActionInst CreateInstance(IServiceProvider sp)
+            => (ITransformActionInst) sp.GetRequiredService(typeof(TInstance));
     }
 }

@@ -16,8 +16,8 @@ namespace Etl.Core
         private readonly ILoaderFactory _loaderFactory;
         
         private ICompilerEvent _events;
-        private List<(LoaderDef definition, ILoader instance)> _loaders = new();
-        private (EtlDef definition, Etl instance) _etl;
+        private List<(Loader definition, ILoaderInst instance)> _loaders = new();
+        private (Etl definition, EtlInst instance) _etl;
 
         public Workflow(EtlSetting setting, IEtlFactory etlFactory, ILoaderFactory loaderFactory, IServiceProvider sp)
         {
@@ -46,18 +46,18 @@ namespace Etl.Core
             return SetConfig(definition, instance);
         }
 
-        public Workflow SetConfig(EtlDef definition, Etl instance = null)
+        public Workflow SetConfig(Etl definition, EtlInst instance = null)
         {
             if (definition != null)
             {
                 _loaders = _loaderFactory.Get(definition.Loaders) ?? new();
-                _etl = (definition, instance ?? new Etl(definition));
+                _etl = (definition, instance ?? new EtlInst(definition));
             }
 
             return this;
         }
 
-        public Workflow AddLoaders(params LoaderDef[] args)
+        public Workflow AddLoaders(params Loader[] args)
         {
             var items = _loaderFactory.Get(args);
             if (items != null)
@@ -66,14 +66,14 @@ namespace Etl.Core
             return this;
         }
 
-        public Workflow AddLoaders(params ILoader[] loaders)
+        public Workflow AddLoaders(params ILoaderInst[] loaders)
         {
             if (loaders != null)
-                _loaders.AddRange(loaders.Select(e => ((LoaderDef)default, e)));
+                _loaders.AddRange(loaders.Select(e => ((Loader)default, e)));
             return this;
         }
 
-        public Workflow AddLoaders(params (LoaderDef def, ILoader instance)[] loaders)
+        public Workflow AddLoaders(params (Loader def, ILoaderInst instance)[] loaders)
         {
             if (loaders != null)
                 _loaders.AddRange(loaders);
@@ -91,7 +91,7 @@ namespace Etl.Core
                 SetConfig(definition, instance);
             }
 
-            new WorkflowExecutor(
+            new WorkflowInst(
                 _etlSetting, _etl.definition, _etl.instance, 
                 _loaders,
                 _events)

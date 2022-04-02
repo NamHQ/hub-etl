@@ -4,7 +4,7 @@ using System;
 namespace Etl.Core.Transformation.Fields
 {
 
-    public class IntegerAction : TransformAction<int?>
+    public class IntegerActionInst : TransformActionInst<int?>
     {
         protected override int? Execute(object input, ActionArgs args)
         {
@@ -20,8 +20,8 @@ namespace Etl.Core.Transformation.Fields
         }
     }
 
-    public class IntegerFieldDef : PipeLineFieldDef
+    public class IntegerField : PipeLineField
     {
-        protected override TransformActionDef MainActionDef => new TransformActionDef<IntegerAction>();
+        protected override TransformAction MainAction => new TransformAction<IntegerActionInst>();
     }
 }

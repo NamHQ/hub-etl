@@ -8,23 +8,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class MongoDbLoader : Loader<MongoDbLoader, MongoDbLoaderDef>
+    public class MongoDbLoader : Loader<MongoDbLoaderInst, MongoDbLoader>
+    {
+        [XmlAttribute]
+        public string ConnectionName { get; set; }
+
+        [XmlAttribute]
+        public int MaxConcurency { get; set; } = 10;
+
+        [XmlAttribute]
+        public string CollectionName { get; set; }
+    }
+
+    public class MongoDbLoaderInst : LoaderInst<MongoDbLoaderInst, MongoDbLoader>
     {
         private readonly IConfiguration _configuration;
         private readonly List<Task> _tasks = new();
         
-        private MongoDbLoaderDef _args;
+        private MongoDbLoader _args;
         private Lazy<IMongoDatabase> _lazyDb;
 
-        public MongoDbLoader(IConfiguration configuration)
+        public MongoDbLoaderInst(IConfiguration configuration)
         {
             _configuration = configuration;
         }
 
-        protected override void Initalize(MongoDbLoaderDef args, string inputFile, IReadOnlyCollection<TransformFieldDef> fields)
+        protected override void Initalize(MongoDbLoader args, string inputFile, IReadOnlyCollection<TransformField> fields)
         {
             _args = args;
             _lazyDb = new Lazy<IMongoDatabase>(() =>

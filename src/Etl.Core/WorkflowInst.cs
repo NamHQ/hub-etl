@@ -12,15 +12,15 @@ using Etl.Core.Extraction;
 
 namespace Etl.Core
 {
-    public class WorkflowExecutor
+    public class WorkflowInst
     {
         private readonly int _maxExtractorThread;
         private readonly int _maxBatchBuffer;
         private readonly int _scanBatch;
         private readonly int _flushBatch;
         private readonly ICompilerEvent _events;
-        private readonly List<(LoaderDef definition, ILoader instance)> _loaders = new();
-        private readonly Etl _etl;
+        private readonly List<(Loader definition, ILoaderInst instance)> _loaders = new();
+        private readonly EtlInst _etl;
 
         private int _totalRecords;
         private int _totalValidRecords;
@@ -30,15 +30,15 @@ namespace Etl.Core
         private SequenceFlushBuffer _sequenceFlushBuffer;
         private Func<ExtractedRecord, TransformResult> _transformInstance;
 
-        public WorkflowExecutor(EtlSetting etlSetting, EtlDef etlDef, Etl etl,
-            List<(LoaderDef definition, ILoader instance)> loaders,
+        public WorkflowInst(EtlSetting etlSetting, Etl etl, EtlInst etlInst,
+            List<(Loader definition, ILoaderInst instance)> loaders,
             ICompilerEvent events)
         {
             _maxExtractorThread = etlSetting?.Extraction?.MaxThread ?? 2;
             _maxBatchBuffer = etlSetting?.Extraction?.MaxBatchBuffer ?? 100;
-            _scanBatch = etlDef.ScanBatch;
-            _flushBatch = etlDef.FlushBatch;
-            _etl = etl;
+            _scanBatch = etl.ScanBatch;
+            _flushBatch = etl.FlushBatch;
+            _etl = etlInst;
             _loaders = loaders;
             _events = events;
             _transformResult = new TransformResult(_flushBatch);

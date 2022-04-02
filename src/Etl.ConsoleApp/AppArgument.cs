@@ -16,7 +16,7 @@ namespace Etl.ConsoleApp
             public bool OnTransformed;
             public bool OnTransformedBatch;
 
-            public EtlDef Config;
+            public Core.Etl Config;
         }
     }
 }

@@ -1,32 +1,28 @@
-﻿using Etl.Core.Extraction;
+﻿using System;
+using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public interface ITransformField
+    public abstract class TransformField
     {
-        string DataField { get; set; }
-        string ParserField { get; set; }
+        [XmlAttribute]
+        public string Field { get; set; }
 
-        bool Required { get; set; }
-        object Transform(ExtractedRecord record);
-    }
-
-    public abstract class TransformField : ITransformField
-    {
-        public string DataField { get; set; }
+        [XmlAttribute]
         public string ParserField { get; set; }
-        public bool Required { get; set; }
-        public abstract object Transform(ExtractedRecord record);
-    }
 
-    public abstract class TransformField<T> : ITransformField
-    {
-        public string DataField { get; set; }
-        public string ParserField { get; set; }
+        [XmlAttribute]
         public bool Required { get; set; }
 
-        object ITransformField.Transform(ExtractedRecord record)
-            => Transform(record);
-        protected abstract T Transform(ExtractedRecord record);
+        public ITransformFieldInst CreateInstance(IServiceProvider sp)
+        {
+            var instance = OnCreateInstance(sp);
+            instance.DataField = String.IsNullOrWhiteSpace(Field) ? ParserField : Field;
+            instance.ParserField = String.IsNullOrWhiteSpace(ParserField) ? Field : ParserField;
+            instance.Required = Required;
+            return instance;
+        }
+
+        protected abstract ITransformFieldInst OnCreateInstance(IServiceProvider sp);
     }
 }

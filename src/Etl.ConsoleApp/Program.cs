@@ -19,7 +19,7 @@ namespace Etl.ConsoleApp
 
                 var services = new ServiceCollection();
                 services.AddSingleton(configuration);
-                services.AddEtl(configuration, typeof(CsvLoader).Assembly);
+                services.AddEtl(configuration, typeof(CsvLoaderInst).Assembly);
 
                 var sp = services.BuildServiceProvider();
 

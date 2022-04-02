@@ -5,22 +5,22 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
-namespace Etl.Core
+namespace Etl.Core.Transformation
 {
-    public interface IEtlContext
+    public interface ICryptorInfo
     {
-        (byte[] key, byte[] iv) CryptorInfo { get; }
+        (byte[] key, byte[] iv) Config { get; }
 
         string SaltHashString { get; }
     }
 
-    public class EtlContext : IEtlContext
+    public class CryptorInfo : ICryptorInfo
     {
-        public (byte[] key, byte[] iv) CryptorInfo { get; }
+        public (byte[] key, byte[] iv) Config { get; private set; }
 
-        public string SaltHashString { get; }
+        public string SaltHashString { get; private set; }
 
-        public EtlContext(EtlSetting etlSetting)
+        public CryptorInfo(EtlSetting etlSetting)
         {
             var hashFilePath = etlSetting?.Cryptor?.HashFile;
             var cryptorFilePath = etlSetting?.Cryptor?.CryptorFile;
@@ -49,7 +49,7 @@ namespace Etl.Core
                 encryptorIv = Encoding.ASCII.GetBytes(Cryptor.Decrypt(element.Attributes["iv"].Value));
             }
 
-            CryptorInfo = (encryptorKey, encryptorIv);
+            Config = (encryptorKey, encryptorIv);
         }
     }
 }

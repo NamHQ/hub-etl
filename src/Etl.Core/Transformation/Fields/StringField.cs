@@ -2,15 +2,15 @@
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class StringAction : TransformAction<string>
+    public class StringActionInst : TransformActionInst<string>
     {
         protected override string Execute(object input, ActionArgs args)
             => input?.ToString();
     }
 
-    public class StringFieldDef : PipeLineFieldDef
+    public class StringField : PipeLineField
     {
-        protected override TransformActionDef MainActionDef => new TransformActionDef<StringAction>();
+        protected override TransformAction MainAction => new TransformAction<StringActionInst>();
     }
 
     //public class StringField : DataField<string>

@@ -6,7 +6,7 @@ namespace Etl.Core.Load
 {
     public interface ILoaderFactory
     {
-        List<(LoaderDef definition, ILoader instance)> Get(IEnumerable<LoaderDef> args);
+        List<(Loader definition, ILoaderInst instance)> Get(IEnumerable<Loader> args);
     }
 
     public class LoaderFactory : ILoaderFactory
@@ -18,12 +18,12 @@ namespace Etl.Core.Load
             _sp = sp;
         }
 
-        public List<(LoaderDef definition, ILoader instance)> Get(IEnumerable<LoaderDef> args)
+        public List<(Loader definition, ILoaderInst instance)> Get(IEnumerable<Loader> args)
         {
-            var loaders = new List<(LoaderDef, ILoader)>();
+            var loaders = new List<(Loader, ILoaderInst)>();
             if (args != null)
                 foreach (var e in args)
-                    loaders.Add((e, (ILoader) _sp.GetRequiredService(e.LoaderType)));
+                    loaders.Add((e, (ILoaderInst) _sp.GetRequiredService(e.LoaderType)));
 
 
             return loaders;

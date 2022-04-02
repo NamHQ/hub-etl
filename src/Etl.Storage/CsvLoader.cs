@@ -2,15 +2,24 @@
 using Etl.Core.Transformation.Fields;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class CsvLoader : FileLoader<CsvLoader, CsvLoaderDef>
+    public class CsvLoader : FileLoaderDef<CsvLoaderInst, CsvLoader>
+    {
+        [XmlAttribute]
+        public string Delimiter { get; set; } = "|";
+
+        public List<string> Fields { get; set; } = new();
+    }
+
+    public class CsvLoaderInst : FileLoaderInst<CsvLoaderInst, CsvLoader>
     {
         private Dictionary<string, int> _fieldOrders;
         private string _delimiter;
 
-        protected override void Initalize(CsvLoaderDef args, string inputFile, IReadOnlyCollection<TransformFieldDef> fields)
+        protected override void Initalize(CsvLoader args, string inputFile, IReadOnlyCollection<TransformField> fields)
         {
             //args must be immutable, it is singleton.
             base.Initalize(args, inputFile, fields);

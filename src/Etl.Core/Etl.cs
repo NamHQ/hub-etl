@@ -1,40 +1,23 @@
-﻿using System.Collections.Generic;
-using Etl.Core.Events;
-using Etl.Core.Scanner;
-using Etl.Core.Extraction;
+﻿using Etl.Core.Extraction;
+using Etl.Core.Load;
 using Etl.Core.Transformation;
-using System;
-using Etl.Core.Transformation.Fields;
-using System.IO;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace Etl.Core
 {
     public class Etl
     {
-        private readonly Extractor _extractor;
-        private readonly Transformer _transformer;
-        public IReadOnlyCollection<TransformFieldDef> AllFields => _transformer.AllFields;
+        [XmlAttribute]
+        public int ScanBatch { get; set; } = 10;
 
-        public Etl(EtlDef etfDef)
-        {
-            _extractor = new Extractor(etfDef.Extraction);
-            _transformer = new Transformer(etfDef.Transformation, etfDef.Extraction.Layout);
-        }
+        [XmlAttribute]
+        public int FlushBatch { get; set; } = 10 * 1000;
 
-        public (
-            Scanner.Scanner scaner,
-            Func<ExtractedRecord, TransformResult> transformInstance)
-            Start(Func<StreamReader> getStreamReader, IServiceProvider sp, Action<List<TextLine>> flush)
-        {
-            return (
-                _extractor.CreateScanner(getStreamReader, flush),
-                _transformer.CreateInstance(sp));
-        }
+        public Extractor Extraction { get; set; } = new();
 
-        public ExtractedRecord Extract(List<TextLine> textLines, ICompilerEvent events)
-            => _extractor.Execute(textLines, events);
+        public Transformer Transformation { get; set; } = new();
 
-        public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
-            => _transformer.ApplyMassage(batch);
+        public List<Loader> Loaders { get; set; } = new();
     }
 }

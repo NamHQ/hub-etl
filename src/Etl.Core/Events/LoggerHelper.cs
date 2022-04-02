@@ -43,7 +43,7 @@ namespace Etl.Core.Events
 
         public static void OnExtracting(
             Action<string> writer,
-            LayoutDef layout,
+            Layout layout,
             int hierachy,
             TextBlock block,
             (int row, int column)? start, (int row, int column)? from, (int row, int column)? to,

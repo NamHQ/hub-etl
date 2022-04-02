@@ -3,7 +3,7 @@ using System;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class BooleanAction : TransformAction<bool?>
+    public class BooleanActionInst : TransformActionInst<bool?>
     {
         protected override bool? Execute(object input, ActionArgs args)
         {
@@ -17,8 +17,8 @@ namespace Etl.Core.Transformation.Fields
         }
     }
 
-    public class BooleanFieldDef : PipeLineFieldDef
+    public class BooleanField : PipeLineField
     {
-        protected override TransformActionDef MainActionDef => new TransformActionDef<BooleanAction>();
+        protected override TransformAction MainAction => new TransformAction<BooleanActionInst>();
     }
 }
