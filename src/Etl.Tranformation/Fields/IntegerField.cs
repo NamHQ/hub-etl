@@ -1,6 +1,8 @@
 ﻿using Etl.Core.Transformation.Actions;
+using Etl.Core.Transformation.Fields;
+using Etl.Tranformation.Actions;
 
-namespace Etl.Core.Transformation.Fields
+namespace Etl.Tranformation.Fields
 {
     public class IntegerField : PipeLineField
     {

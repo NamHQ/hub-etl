@@ -1,6 +1,5 @@
 ﻿using Etl.Core.Load;
 using Etl.Core.Settings;
-using Etl.Core.Transformation;
 using Etl.Core.Transformation.Actions;
 using Etl.Core.Transformation.Fields;
 using Microsoft.Extensions.Configuration;
@@ -23,19 +22,13 @@ namespace Etl.Core
             var etlSetting = configuration.GetSection("Etl").Get<EtlSetting>();
             services.AddSingleton(etlSetting);
 
-            var refAssemblies = etlSetting.References.GetRefAssemblies();
+            var (fieldDefs, actionDefs) = services.AddTransformer(etlSetting.References.TransformFields, transformerAssemblies);
 
-            var (fieldDefs, actionDefs) = services.AddTransformer(transformerAssemblies, refAssemblies);
-
-            var loaderDefs = services.AddLoaders(loaderAssemblies, refAssemblies);
+            var loaderDefs = services.AddLoaders(etlSetting.References.Loaders, loaderAssemblies);
 
             var etlFactory = new EtlFactory(etlSetting, fieldDefs, actionDefs, loaderDefs);
             services.AddSingleton(etlFactory);
             services.AddSingleton<IEtlFactory>(etlFactory);
-
-            var cryptorInfo = new CryptorInfo(etlSetting);
-            services.AddSingleton(cryptorInfo);
-            services.AddTransient<ICryptorInfo>(sp => cryptorInfo);
 
             services.AddTransient<Workflow>();
 
@@ -43,10 +36,10 @@ namespace Etl.Core
         }
 
         private static (List<Type> fieldDefs, List<Type> actionDefs) AddTransformer(this IServiceCollection services,
-            IEnumerable<Assembly> transformerAssemblies,
-            IEnumerable<Assembly> refAssemblies)
+            IEnumerable<string> refDlls,
+            IEnumerable<Assembly> transformerAssemblies)
         {
-            var assemblies = new List<Assembly>(refAssemblies);
+            var assemblies = GetRefAssemblies(refDlls);
             if (transformerAssemblies != null)
                 assemblies.AddRange(transformerAssemblies);
 
@@ -76,12 +69,10 @@ namespace Etl.Core
         }
 
         private static List<Type> AddLoaders(this IServiceCollection services,
-            IEnumerable<Assembly> loaderAssemblies,
-            IEnumerable<Assembly> refAssemblies)
+            IEnumerable<string> refDlls,
+            IEnumerable<Assembly> loaderAssemblies)
         {
-            services.AddSingleton<ILoaderFactory, LoaderFactory>();
-
-            var assemblies = new List<Assembly>(refAssemblies);
+            var assemblies = GetRefAssemblies(refDlls);
             if (loaderAssemblies != null)
                 assemblies.AddRange(loaderAssemblies);
 
@@ -106,13 +97,14 @@ namespace Etl.Core
             return loaderDefs;
         }
 
-        private static IEnumerable<Assembly> GetRefAssemblies(this IEnumerable<string> refDlls)
+        private static List<Assembly> GetRefAssemblies(this IEnumerable<string> refDlls)
             => refDlls.Select(e =>
             {
                 var fileInfo = new FileInfo(e);
                 if (!fileInfo.Exists)
                     throw new Exception($"File not found {e} to refer.");
                 return Assembly.LoadFrom(fileInfo.FullName);
-            });
+            })
+            .ToList();
     }
 }

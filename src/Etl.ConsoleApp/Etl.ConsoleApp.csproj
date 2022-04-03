@@ -16,6 +16,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Etl.Core\Etl.Core.csproj" />
 	  <ProjectReference Include="..\Etl.Storage\Etl.Storage.csproj" />
+	  <ProjectReference Include="..\Etl.Tranformation\Etl.Tranformation.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

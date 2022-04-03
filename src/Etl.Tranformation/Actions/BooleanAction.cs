@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Etl.Core.Transformation.Actions;
+using System;
 
-namespace Etl.Core.Transformation.Actions
+namespace Etl.Tranformation.Actions
 {
     public class BooleanAction : TransformAction<BooleanActionInst>
     {

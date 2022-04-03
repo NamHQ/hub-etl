@@ -1,8 +1,9 @@
 ﻿using Etl.Core.Extraction;
 using Etl.Core.Load;
-using Etl.Core.Transformation.Actions;
 using Etl.Core.Transformation.Fields;
 using Etl.Storage;
+using Etl.Tranformation.Actions;
+using Etl.Tranformation.Fields;
 
 namespace Etl.ConsoleApp
 {
@@ -286,7 +287,7 @@ namespace Etl.ConsoleApp
         {
             return new Core.Etl
             {
-                ScanBatch = 100,
+                ScanBatch = 1,
                 FlushBatch = 2,
                 Extraction =
                 {

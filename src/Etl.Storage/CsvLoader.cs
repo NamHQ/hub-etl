@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class CsvLoader : FileLoader<CsvLoaderInst, CsvLoader>
+    public class CsvLoader : FileLoader<CsvLoader, CsvLoaderInst>
     {
         [XmlAttribute]
         public string Delimiter { get; set; } = "|";
@@ -14,23 +14,23 @@ namespace Etl.Storage
         public List<string> Fields { get; set; } = new();
     }
 
-    public class CsvLoaderInst : FileLoaderInst<CsvLoaderInst, CsvLoader>
+    public class CsvLoaderInst : FileLoaderInst<CsvLoader, CsvLoaderInst>
     {
         private Dictionary<string, int> _fieldOrders;
         private string _delimiter;
 
-        protected override void Initalize(CsvLoader args, string inputFile, IReadOnlyCollection<TransformField> fields)
+        protected override void Initalize(CsvLoader defintion, LoaderArgs args)
         {
             //args must be immutable, it is singleton.
-            base.Initalize(args, inputFile, fields);
+            base.Initalize(defintion, args);
             var selectedFields = new List<string>();
 
-            if (args.Fields.Count == 0)
-                selectedFields.AddRange(fields.Select(e => e.Field ?? e.ParserField));
+            if (defintion.Fields.Count == 0)
+                selectedFields.AddRange(args.Fields.Select(e => e.Field ?? e.ParserField));
             else
-                selectedFields.AddRange(args.Fields);
+                selectedFields.AddRange(defintion.Fields);
 
-            _delimiter = args.Delimiter;
+            _delimiter = defintion.Delimiter;
             _stream.WriteLine(string.Join('|', selectedFields));
 
             if (_fieldOrders == null)
@@ -42,7 +42,7 @@ namespace Etl.Storage
             
         }
 
-        protected override void OnProcessBatch(BatchResult result)
+        public override void OnProcessBatch(BatchResult result)
         {
             for (var i = 0; i < result.Batch.Count; i++)
                 OnSaveRecord(result.Batch[i]);
@@ -51,7 +51,7 @@ namespace Etl.Storage
                 OnCompleted();
         }
 
-        protected virtual void OnSaveRecord(IDictionary<string, object> record)
+        public virtual void OnSaveRecord(IDictionary<string, object> record)
         {
             var eles = new object[_fieldOrders.Count];
             foreach (var e in record)

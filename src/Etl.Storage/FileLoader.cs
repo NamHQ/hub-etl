@@ -6,30 +6,31 @@ using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public abstract class FileLoader<TInst, TDef> : Loader<TInst, TDef>
-        where TInst : FileLoaderInst<TInst, TDef>
-        where TDef : FileLoader<TInst, TDef>
+    public abstract class FileLoader<TDef, TInst> : Loader<TInst>
+        where TDef : FileLoader<TDef, TInst>
+        where TInst : FileLoaderInst<TDef, TInst>
     {
         [XmlAttribute]
         public string OutPath { get; set; } = "$path/$name.result";
     }
 
-    public abstract class FileLoaderInst<TInst, TDef> : LoaderInst<TInst, TDef>
-        where TInst : FileLoaderInst<TInst, TDef>
-        where TDef : FileLoader<TInst, TDef>
+    public abstract class FileLoaderInst<TDef, TInst> : LoaderInst<TDef>
+        where TDef : FileLoader<TDef, TInst>
+        where TInst : FileLoaderInst<TDef, TInst>
+
     {
         protected StreamWriter _stream;
 
-        protected override void Initalize(TDef definition, string inputFile, IReadOnlyCollection<TransformField> fields)
+        protected override void Initalize(TDef definition, LoaderArgs args)
         {
-            var file = new FileInfo(inputFile);
+            var file = new FileInfo(args.InputFile);
             var path = definition.OutPath.Replace("$path", file.DirectoryName)
                 .Replace("$name", file.Name);
 
             _stream = new StreamWriter(path);
         }
 
-        protected sealed override void ProcessBatch(BatchResult result)
+        public sealed override void ProcessBatch(BatchResult result)
         {
             OnProcessBatch(result);
 
@@ -37,7 +38,7 @@ namespace Etl.Storage
                 OnCompleted();
         }
 
-        protected abstract void OnProcessBatch(BatchResult result);
+        public abstract void OnProcessBatch(BatchResult result);
 
         protected virtual void OnCompleted()
             => _stream?.Dispose();

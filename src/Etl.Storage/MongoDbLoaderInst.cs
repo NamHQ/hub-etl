@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class MongoDbLoader : Loader<MongoDbLoaderInst, MongoDbLoader>
+    public class MongoDbLoader : Loader<MongoDbLoaderInst>
     {
         [XmlAttribute]
         public string ConnectionName { get; set; }
@@ -24,7 +24,7 @@ namespace Etl.Storage
         public string CollectionName { get; set; }
     }
 
-    public class MongoDbLoaderInst : LoaderInst<MongoDbLoaderInst, MongoDbLoader>
+    public class MongoDbLoaderInst : LoaderInst<MongoDbLoader>
     {
         private readonly IConfiguration _configuration;
         private readonly List<Task> _tasks = new();
@@ -37,18 +37,18 @@ namespace Etl.Storage
             _configuration = configuration;
         }
 
-        protected override void Initalize(MongoDbLoader args, string inputFile, IReadOnlyCollection<TransformField> fields)
+        protected override void Initalize(MongoDbLoader definition, LoaderArgs args)
         {
-            _args = args;
+            _args = definition;
             _lazyDb = new Lazy<IMongoDatabase>(() =>
             {
-                var cn = _configuration.GetSection($"MongoDb:{args.ConnectionName ?? "Default"}").Get<MongoDbConnection>();
+                var cn = _configuration.GetSection($"MongoDb:{definition.ConnectionName ?? "Default"}").Get<MongoDbConnection>();
                 var client = new MongoClient(cn.GetConnectionString());
                 return client.GetDatabase(cn.DbName);
             });
         }
 
-        protected override void ProcessBatch(BatchResult parseResult)
+        public override void ProcessBatch(BatchResult parseResult)
         {
             int sleep = 0;
             while (_tasks.Count >= _args.MaxConcurency)
@@ -81,7 +81,7 @@ namespace Etl.Storage
             return collection.InsertManyAsync(batch.Select(e => new BsonDocument(e)));
         }
 
-        protected override void WaitToComplete()
+        public override void WaitToComplete()
         {
             Task[] tasks = null;
             lock (this)

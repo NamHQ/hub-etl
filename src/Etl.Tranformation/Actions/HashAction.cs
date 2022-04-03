@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Security.Cryptography;
+using Etl.Core.Transformation.Actions;
 
-namespace Etl.Core.Transformation.Actions
+namespace Etl.Tranformation.Actions
 {
     public class HashAction : TransformAction<HashActionInst> { }
 

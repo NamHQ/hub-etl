@@ -19,7 +19,6 @@ namespace Etl.Core
         private readonly int _scanBatch;
         private readonly int _flushBatch;
         private readonly ICompilerEvent _events;
-        private readonly List<(Loader definition, ILoaderInst instance)> _loaders = new();
         private readonly EtlInst _etl;
 
         private int _totalRecords;
@@ -29,40 +28,35 @@ namespace Etl.Core
         private DateTime _start = DateTime.Now;
         private SequenceFlushBuffer _sequenceFlushBuffer;
         private Func<ExtractedRecord, TransformResult> _transformInstance;
+        private List<ILoaderInst> _loaderInstances;
 
-        public WorkflowInst(EtlSetting etlSetting, Etl etl, EtlInst etlInst,
-            List<(Loader definition, ILoaderInst instance)> loaders,
-            ICompilerEvent events)
+        public WorkflowInst(EtlSetting etlSetting, Etl etl, EtlInst etlInst, ICompilerEvent events)
         {
             _maxExtractorThread = etlSetting?.Extraction?.MaxThread ?? 2;
             _maxBatchBuffer = etlSetting?.Extraction?.MaxBatchBuffer ?? 100;
             _scanBatch = etl.ScanBatch;
             _flushBatch = etl.FlushBatch;
             _etl = etlInst;
-            _loaders = loaders;
             _events = events;
             _transformResult = new TransformResult(_flushBatch);
         }
 
         public void Start(string dataFilePath, IServiceProvider sp, int? take = null, int? skip = null)
         {
-            bool isFirst = true;
-            _sequenceFlushBuffer = new SequenceFlushBuffer((result, isLast) =>
-            {
-                OnTransformed(result, isFirst, isLast, dataFilePath);
-                isFirst = false;
-            });
-
             _start = DateTime.Now;
             List<List<TextLine>> scannedBatch = new();
             List<Task> extractTasks = new(_maxExtractorThread);
 
-            var (scanner, transformInstance) = _etl.Start(
+            var (scanner, transformInstance, loaderInstances) = _etl.Start(
+                dataFilePath,
                 () => new StreamReader(dataFilePath),
                 sp,
                 textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks));
 
             _transformInstance = transformInstance;
+            _loaderInstances = loaderInstances;
+            _sequenceFlushBuffer = new SequenceFlushBuffer(OnTransformed);
+
             scanner.Start();
             scanner.Dispose();
 
@@ -71,7 +65,7 @@ namespace Etl.Core
             OnExtractAndTransform(scannedBatch, true);
 
             _sequenceFlushBuffer.WaitFlush();
-            _loaders.ForEach(e => e.instance.WaitToComplete());
+            _loaderInstances.ForEach(e => e.WaitToComplete());
         }
 
         private List<List<TextLine>> OnScanned(List<TextLine> textLines, List<List<TextLine>> batch, List<Task> extractionTasks)
@@ -130,14 +124,8 @@ namespace Etl.Core
                 _sequenceFlushBuffer.Push(temp, isLast);
         }
 
-        private void OnTransformed(TransformResult result, bool isFirst, bool isLast, string dataFile)
+        private void OnTransformed(TransformResult result, bool isLast)
         {
-            if (isFirst)
-            {
-                isFirst = false;
-                _loaders.ForEach(e => e.instance.Initalize(e.definition, dataFile, _etl.AllFields));
-            }
-
             var batch = _etl.ApplyMassage(result.Items);
             var batchResult = new BatchResult
             {
@@ -150,7 +138,7 @@ namespace Etl.Core
                 IsLast = isLast
             };
 
-            _loaders.ForEach(e => e.instance.ProcessBatch(batchResult));
+            _loaderInstances.ForEach(e => e.ProcessBatch(batchResult));
             _events?.OnTransformedBatch?.Invoke(batchResult);
         }
 

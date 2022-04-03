@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
-namespace Etl.Core.Transformation
+namespace Etl.Tranformation
 {
     public interface ICryptorInfo
     {

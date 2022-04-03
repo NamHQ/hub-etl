@@ -55,8 +55,5 @@ namespace Etl.Core.Transformation.Fields
         public abstract TOutput Transform(ExtractedRecord record);
         object ITransformFieldInst.Transform(ExtractedRecord record)
             => Transform(record);
-
-        
-       
     }
 }

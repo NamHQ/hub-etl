@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Etl.Core.Transformation.Actions;
+using System;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
-namespace Etl.Core.Transformation.Actions
+namespace Etl.Tranformation.Actions
 {
     public class SubStringAction : TransformAction<SubStringActionInst>
     {

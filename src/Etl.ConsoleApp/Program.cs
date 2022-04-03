@@ -1,6 +1,6 @@
 ﻿using Etl.Core;
-using Etl.Core.Transformation.Fields;
 using Etl.Storage;
+using Etl.Tranformation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -22,13 +22,14 @@ namespace Etl.ConsoleApp
 
                 var services = new ServiceCollection();
                 services.AddSingleton(configuration);
+                services.AddEtlTransformation(configuration);
                 services.AddEtl(configuration,
-                    new List<Assembly> { typeof(TransformField).Assembly },
-                    new List<Assembly> { typeof(CsvLoaderInst).Assembly });
+                    new List<Assembly> { typeof(Core.Setup).Assembly, typeof(Tranformation.Setup).Assembly},
+                    new List<Assembly> { typeof(CsvLoader).Assembly });
 
                 var sp = services.BuildServiceProvider();
 
-                sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
+                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
 
                 sp.GetRequiredService<Workflow>()
                    .SetConfig(args.Config)
@@ -78,14 +79,14 @@ namespace Etl.ConsoleApp
             var dataFoler = "../../../../../Data";
 
             //args.Config = ConfigTest.CreateCD028();
-            args.Config = ConfigTest.CreateDelimiterDemoConfig();
+            //args.Config = ConfigTest.CreateDelimiterDemoConfig();
             //EtlFactory.Save(args.Config, $"{dataFoler}/Delimiter-demo.xml");
             arguments = new string[] {
                 //$"{dataFoler}/FDC_CRVD3071_CD028_2111161907",
                 //"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",
 
                 $"{dataFoler}/Delimiter-demo",
-                //$"-config={dataFoler}/Delimiter-demo.xml",
+                $"-config={dataFoler}/Delimiter-demo.xml",
 
                 //"-hash=D:/DLL/HashSaltKeys/salt.xml",
                 //"-cryptor=D:/DLL/keys.xml",

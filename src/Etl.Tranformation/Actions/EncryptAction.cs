@@ -1,6 +1,7 @@
-﻿using Etl.Core.Utils;
+﻿using Etl.Core.Transformation.Actions;
+using Etl.Core.Utils;
 
-namespace Etl.Core.Transformation.Actions
+namespace Etl.Tranformation.Actions
 {
     public class EncryptAction : TransformAction<EncryptActionInst>
     {

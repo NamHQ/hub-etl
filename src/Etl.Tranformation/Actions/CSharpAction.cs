@@ -1,9 +1,10 @@
 ﻿using Etl.Core.Extraction;
+using Etl.Core.Transformation.Actions;
 using Etl.Core.Utils;
 using System;
 using System.Text;
 
-namespace Etl.Core.Transformation.Actions
+namespace Etl.Tranformation.Actions
 {
     public class CSharpAction : TransformAction<CSharpActionInst>
     {
@@ -30,10 +31,10 @@ namespace Etl.Core.Transformation.Actions
 
         protected override void Initialize(CSharpAction definition, IServiceProvider sp)
             => _executor = definition.Executor;
-        
+
         protected override object Execute(object input, ActionArgs args)
             => _executor(input as string, args.Record);
 
-        
+
     }
 }

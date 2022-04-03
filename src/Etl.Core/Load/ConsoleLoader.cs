@@ -2,13 +2,13 @@
 
 namespace Etl.Core.Load
 {
-    public class ConsoleLoader : Loader<ConsoleLoaderInst, ConsoleLoader>
+    public class ConsoleLoader : Loader<ConsoleLoaderInst>
     {
     }
 
-    public class ConsoleLoaderInst : LoaderInst<ConsoleLoaderInst, ConsoleLoader>
+    public class ConsoleLoaderInst : LoaderInst<ConsoleLoader>
     {
-        protected override void ProcessBatch(BatchResult batch)
+        public override void ProcessBatch(BatchResult batch)
             => Console.WriteLine(batch);
     }
 }
