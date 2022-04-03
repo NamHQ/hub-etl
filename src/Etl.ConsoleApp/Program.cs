@@ -1,4 +1,5 @@
 ﻿using Etl.Core;
+using Etl.Core.Load;
 using Etl.Storage;
 using Etl.Tranformation;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Etl.ConsoleApp
 {
@@ -24,14 +26,14 @@ namespace Etl.ConsoleApp
                 services.AddSingleton(configuration);
                 services.AddEtlTransformation(configuration);
                 services.AddEtl(configuration,
-                    new List<Assembly> { typeof(Core.Setup).Assembly, typeof(Tranformation.Setup).Assembly},
+                    new List<Assembly> { typeof(Core.Setup).Assembly, typeof(Tranformation.Setup).Assembly },
                     new List<Assembly> { typeof(CsvLoader).Assembly });
 
                 var sp = services.BuildServiceProvider();
 
                 //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
 
-                sp.GetRequiredService<Workflow>()
+                var builder = sp.GetRequiredService<WorkflowBuilder>()
                    .SetConfig(args.Config)
                    .SetConfig(args.ConfigFile)                  //Override args.Config
                                                                 //.AddLoaders(new CsvLoaderDef())
@@ -41,8 +43,17 @@ namespace Etl.ConsoleApp
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
                         onTransformed: args.OnTransformed,
-                        onTransformedBatch: args.OnTransformedBatch))
-                   .Start(args.DataFile, args.Take, args.Skip);
+                        onTransformedBatch: args.OnTransformedBatch));
+
+                var workflow1 = builder.Build(args.DataFile);
+                var workflow2 = builder.Build(args.DataFile + "1");
+
+                var tasks = new List<Task> {
+                    Task.Run(() => workflow1.Start()),
+                    Task.Run(() => workflow2.Start()),
+                };
+
+                Task.WaitAll(tasks.ToArray());
             }
             catch (Exception ex)
             {

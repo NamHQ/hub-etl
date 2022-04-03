@@ -30,7 +30,7 @@ namespace Etl.Core
             services.AddSingleton(etlFactory);
             services.AddSingleton<IEtlFactory>(etlFactory);
 
-            services.AddTransient<Workflow>();
+            services.AddTransient<WorkflowBuilder>();
 
             return services;
         }
