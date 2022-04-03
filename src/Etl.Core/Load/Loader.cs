@@ -1,6 +1,4 @@
-﻿using Etl.Core.Transformation.Fields;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace Etl.Core.Load
 {

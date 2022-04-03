@@ -4,7 +4,6 @@ using Etl.Core.Events;
 using Etl.Core.Load;
 using System.IO;
 using Etl.Core.Settings;
-using System.Linq;
 
 namespace Etl.Core
 {

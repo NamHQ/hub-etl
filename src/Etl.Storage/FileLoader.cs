@@ -1,6 +1,4 @@
 ﻿using Etl.Core.Load;
-using Etl.Core.Transformation.Fields;
-using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
