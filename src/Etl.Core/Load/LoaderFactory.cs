@@ -23,7 +23,7 @@ namespace Etl.Core.Load
             var loaders = new List<(Loader, ILoaderInst)>();
             if (args != null)
                 foreach (var e in args)
-                    loaders.Add((e, (ILoaderInst) _sp.GetRequiredService(e.LoaderType)));
+                    loaders.Add((e, (ILoaderInst) _sp.GetRequiredService(e.InstanceType)));
 
 
             return loaders;

@@ -2,6 +2,7 @@
 
 namespace Etl.Core.Transformation.Fields
 {
+    public class StringAction : TransformAction<StringActionInst> { }
     public class StringActionInst : TransformActionInst<string>
     {
         protected override string Execute(object input, ActionArgs args)
@@ -10,7 +11,7 @@ namespace Etl.Core.Transformation.Fields
 
     public class StringField : PipeLineField
     {
-        protected override TransformAction MainAction => new TransformAction<StringActionInst>();
+        public override TransformAction DefaultAction => new StringAction();
     }
 
     //public class StringField : DataField<string>

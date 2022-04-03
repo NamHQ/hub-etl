@@ -1,8 +1,11 @@
 ﻿using Etl.Core;
+using Etl.Core.Transformation.Fields;
 using Etl.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Etl.ConsoleApp
 {
@@ -19,7 +22,9 @@ namespace Etl.ConsoleApp
 
                 var services = new ServiceCollection();
                 services.AddSingleton(configuration);
-                services.AddEtl(configuration, typeof(CsvLoaderInst).Assembly);
+                services.AddEtl(configuration,
+                    new List<Assembly> { typeof(TransformField).Assembly },
+                    new List<Assembly> { typeof(CsvLoaderInst).Assembly });
 
                 var sp = services.BuildServiceProvider();
 
@@ -28,8 +33,8 @@ namespace Etl.ConsoleApp
                 sp.GetRequiredService<Workflow>()
                    .SetConfig(args.Config)
                    .SetConfig(args.ConfigFile)                  //Override args.Config
-                   //.AddLoaders(new CsvLoaderDef())
-                   //.AddLoaders(new ConsoleLoader())
+                                                                //.AddLoaders(new CsvLoaderDef())
+                                                                //.AddLoaders(new ConsoleLoader())
                    .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,

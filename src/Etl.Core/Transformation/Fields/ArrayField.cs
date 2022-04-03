@@ -12,7 +12,7 @@ namespace Etl.Core.Transformation.Fields
 
     public class ArrayFieldInst : GroupFieldInst
     {
-        protected override TransformResult Transform(ExtractedRecord record)
+        public override TransformResult Transform(ExtractedRecord record)
         {
             if (!record.ContainsKey(ParserField))
                 return null;

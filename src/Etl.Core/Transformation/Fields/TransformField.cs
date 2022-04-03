@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Etl.Core.Extraction;
+using System;
 using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
@@ -14,15 +15,48 @@ namespace Etl.Core.Transformation.Fields
         [XmlAttribute]
         public bool Required { get; set; }
 
-        public ITransformFieldInst CreateInstance(IServiceProvider sp)
+        protected internal abstract Type InstanceType { get; }
+    }
+
+    public abstract class TransformField<TInst> : TransformField
+        where TInst : ITransformFieldInst
+    {
+        override sealed internal protected Type InstanceType => typeof(TInst);
+    }
+
+    public interface ITransformFieldInst : IInitialization
+    {
+        string DataField { get; }
+        string ParserField { get; }
+
+        bool Required { get; }
+
+        object Transform(ExtractedRecord record);
+    }
+
+    public abstract class TransformFieldInst<TDef, TOutput> : ITransformFieldInst
+        where TDef : TransformField
+    {
+        public string DataField { get; set; }
+        public string ParserField { get; set; }
+        public bool Required { get; set; }
+
+        public virtual void Initialize(TDef definition, IServiceProvider sp) { }
+        void IInitialization.Initialize(object args, IServiceProvider sp)
         {
-            var instance = OnCreateInstance(sp);
-            instance.DataField = String.IsNullOrWhiteSpace(Field) ? ParserField : Field;
-            instance.ParserField = String.IsNullOrWhiteSpace(ParserField) ? Field : ParserField;
-            instance.Required = Required;
-            return instance;
+            var definition = (TDef)args;
+
+            DataField = String.IsNullOrWhiteSpace(definition.Field) ? definition.ParserField : definition.Field;
+            ParserField = String.IsNullOrWhiteSpace(definition.ParserField) ? definition.Field : definition.ParserField;
+            Required = definition.Required;
+            Initialize(definition, sp);
         }
 
-        protected abstract ITransformFieldInst OnCreateInstance(IServiceProvider sp);
+        public abstract TOutput Transform(ExtractedRecord record);
+        object ITransformFieldInst.Transform(ExtractedRecord record)
+            => Transform(record);
+
+        
+       
     }
 }

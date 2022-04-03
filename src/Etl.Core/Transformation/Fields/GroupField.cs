@@ -1,11 +1,12 @@
 ﻿using Etl.Core.Extraction;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class GroupField : TransformField
+    public class GroupField : TransformField<GroupFieldInst>
     {
         [XmlArrayItem("Integer", typeof(IntegerField))]
         //[XmlArrayItem("Float", typeof(FLoatField))]
@@ -19,43 +20,43 @@ namespace Etl.Core.Transformation.Fields
         public virtual List<TransformField> Fields { get; set; } = new();
 
         public HashSet<string> IgnoreParserFields { get; set; } = new();
-
-        protected override ITransformFieldInst OnCreateInstance(IServiceProvider sp)
-        {
-            var result = new GroupFieldInst();
-            foreach (var e in Fields)
-            {
-                var item = e.CreateInstance(sp);
-                if (e is ArrayField array && array.Flat)
-                {
-                    if (result.FlatArray != null)
-                        throw new Exception($"Not except multiple flat {nameof(ArrayField)} in the same hierarchy.");
-
-                    result.FlatArray = (ArrayFieldInst)item;
-                }
-                else
-                    result.Fields.Add(item);
-            }
-
-            return result;
-        }
     }
 
-    public class GroupFieldInst : TransformFieldInst<TransformResult>
+    public class GroupFieldInst : TransformFieldInst<GroupField, TransformResult>
     {
-        public ArrayFieldInst FlatArray;
-        public List<ITransformFieldInst> Fields = new();
+        private readonly List<ITransformFieldInst> _fields = new();
+        private ArrayFieldInst _flatArray;
 
-        protected override TransformResult Transform(ExtractedRecord record)
+        public override void Initialize(GroupField definition, IServiceProvider sp)
+        {
+            foreach (var e in definition.Fields)
+            {
+                var item = (ITransformFieldInst) sp.GetRequiredService(e.InstanceType);
+
+                if (e is ArrayField array && array.Flat)
+                {
+                    if (_flatArray != null)
+                        throw new Exception($"Not except multiple flat {nameof(ArrayField)} in the same hierarchy.");
+
+                    _flatArray = (ArrayFieldInst)item;
+                }
+                else
+                    _fields.Add(item);
+
+                item.Initialize(e, sp);
+            }
+        }
+
+        public override TransformResult Transform(ExtractedRecord record)
         {
             IDictionary<string, object> newRecord = null;
-            var result = FlatArray?.Transform(record) ?? new TransformResult();
+            var result = _flatArray?.Transform(record) ?? new TransformResult();
             if (result.Items.Count == 0)
                 result.Items.Add(newRecord = new Dictionary<string, object>());
 
             try
             {
-                foreach (var field in Fields)
+                foreach (var field in _fields)
                 {
                     var val = field.Transform(record);
                     if (val == null)

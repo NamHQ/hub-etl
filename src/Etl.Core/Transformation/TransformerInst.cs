@@ -16,7 +16,7 @@ namespace Etl.Core.Transformation
         private const string CLASS = "tempClass";
         private const string METHOD = "Execute";
         private readonly Assembly _massageAssembly;
-        private readonly GroupField _gropuFieldDef;
+        private readonly GroupField _gropuField;
 
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _applyMassage;
         public IReadOnlyCollection<TransformField> AllFields { get; }
@@ -24,11 +24,11 @@ namespace Etl.Core.Transformation
         public TransformerInst(Transformer transformDef, Layout layoutDef)
         {
             _massageAssembly = CompileCSharpCode(transformDef.Massage);
-            _gropuFieldDef = new GroupField { Fields = transformDef.Fields };
+            _gropuField = new GroupField { Fields = transformDef.Fields };
 
-            MakeSureMergeParserFields(_gropuFieldDef, layoutDef);
+            MakeSureMergeParserFields(_gropuField, layoutDef);
 
-            AllFields = _gropuFieldDef.Fields;
+            AllFields = _gropuField.Fields;
         }
 
         public Func<ExtractedRecord, TransformResult> CreateInstance(IServiceProvider sp)
@@ -40,9 +40,10 @@ namespace Etl.Core.Transformation
                 _applyMassage = batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
             }
 
-            var groupField = _gropuFieldDef.CreateInstance(sp);
+            var groupFieldInst = new GroupFieldInst();
+            groupFieldInst.Initialize(_gropuField, sp);
 
-            return record => groupField.Transform(record) as TransformResult;
+            return record => groupFieldInst.Transform(record);
         }
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)

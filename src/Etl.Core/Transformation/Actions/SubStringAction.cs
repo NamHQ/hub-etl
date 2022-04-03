@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Actions
 {
-    public class SubStringAction : TransformAction
+    public class SubStringAction : TransformAction<SubStringActionInst>
     {
         [XmlAttribute]
         public string Start { get; set; }
@@ -26,18 +26,13 @@ namespace Etl.Core.Transformation.Actions
             _regexStart = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(Start) ? null : new Regex(Start, RegexOptions.Compiled));
             _regexEnd = new Lazy<Regex>(() => string.IsNullOrWhiteSpace(End) ? null : new Regex(End, RegexOptions.Compiled));
         }
-
-        public override ITransformActionInst CreateInstance(IServiceProvider sp)
-            => new SubStringActionInst(this);
     }
-    public class SubStringActionInst : TransformActionInst<string>
+    public class SubStringActionInst : TransformActionInst<SubStringAction, string>
     {
-        private readonly SubStringAction _definition;
+        private SubStringAction _definition;
 
-        public SubStringActionInst(SubStringAction definition)
-        {
-            _definition = definition;
-        }
+        protected override void Initialize(SubStringAction definition, IServiceProvider sp)
+            => _definition = definition;
 
         protected override string Execute(object input, ActionArgs args)
         {
@@ -77,7 +72,5 @@ namespace Etl.Core.Transformation.Actions
 
             return regexEnd.Value == null && length == 0 || start + length >= text.Length ? text[start..] : text.Substring(start, length);
         }
-
-
     }
 }

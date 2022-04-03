@@ -286,7 +286,7 @@ namespace Etl.ConsoleApp
         {
             return new Core.Etl
             {
-                ScanBatch = 1,
+                ScanBatch = 100,
                 FlushBatch = 2,
                 Extraction =
                 {

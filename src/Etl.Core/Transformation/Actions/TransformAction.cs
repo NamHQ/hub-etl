@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 
 namespace Etl.Core.Transformation.Actions
 {
@@ -7,12 +6,32 @@ namespace Etl.Core.Transformation.Actions
     {
         public int Order { get; set; }
 
-        public abstract ITransformActionInst CreateInstance(IServiceProvider sp);
+        protected internal abstract Type ActionType { get; }
     }
 
-    public class TransformAction<TInstance> : TransformAction where TInstance : ITransformActionInst
+    public abstract class TransformAction<TInst> : TransformAction
+        where TInst : ITransformActionInst
     {
-        public override ITransformActionInst CreateInstance(IServiceProvider sp)
-            => (ITransformActionInst) sp.GetRequiredService(typeof(TInstance));
+        override sealed internal protected Type ActionType  => typeof(TInst);
+    }
+
+    public interface ITransformActionInst
+    {
+        object Execute(object input, ActionArgs args);
+    }
+
+    public abstract class TransformActionInst<TOutput> : ITransformActionInst
+    {
+        protected abstract TOutput Execute(object input, ActionArgs args);
+        object ITransformActionInst.Execute(object input, ActionArgs args)
+            => Execute(input, args);
+    }
+
+    public abstract class TransformActionInst<TDef, TOutput> : TransformActionInst<TOutput>, IInitialization
+        where TDef : TransformAction
+    {
+        protected abstract void Initialize(TDef definition, IServiceProvider sp);
+        void IInitialization.Initialize(object args, IServiceProvider sp)
+            => Initialize((TDef)args, sp);
     }
 }

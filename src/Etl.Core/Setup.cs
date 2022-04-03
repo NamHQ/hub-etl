@@ -1,6 +1,7 @@
 ﻿using Etl.Core.Load;
 using Etl.Core.Settings;
 using Etl.Core.Transformation;
+using Etl.Core.Transformation.Actions;
 using Etl.Core.Transformation.Fields;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,14 +15,19 @@ namespace Etl.Core
 {
     public static class Setup
     {
-        public static IServiceCollection AddEtl(this IServiceCollection services, 
-            IConfiguration configuration, 
-            params Assembly[] loaderAssemblies)
+        public static IServiceCollection AddEtl(this IServiceCollection services,
+            IConfiguration configuration,
+            List<Assembly> transformerAssemblies,
+            List<Assembly> loaderAssemblies)
         {
             var etlSetting = configuration.GetSection("Etl").Get<EtlSetting>();
             services.AddSingleton(etlSetting);
 
-            var loaderDefs = services.AddLoaders(loaderAssemblies, etlSetting.References);
+            var refAssemblies = etlSetting.References.GetRefAssemblies();
+
+            var (fieldDefs, actionDefs) = services.AddTransformer(transformerAssemblies, refAssemblies);
+
+            var loaderDefs = services.AddLoaders(loaderAssemblies, refAssemblies);
 
             var etlFactory = new EtlFactory(etlSetting, loaderDefs);
             services.AddSingleton(etlFactory);
@@ -30,45 +36,83 @@ namespace Etl.Core
             var cryptorInfo = new CryptorInfo(etlSetting);
             services.AddSingleton(cryptorInfo);
             services.AddTransient<ICryptorInfo>(sp => cryptorInfo);
-            
-            services.AddTransient<Workflow>();
 
-            services.AddSingleton<IntegerActionInst>();
-            services.AddSingleton<StringActionInst>();
+            services.AddTransient<Workflow>();
 
             return services;
         }
 
+        private static (List<Type> fieldDefs, List<Type> actionDefs) AddTransformer(this IServiceCollection services,
+            IEnumerable<Assembly> transformerAssemblies,
+            IEnumerable<Assembly> refAssemblies)
+        {
+            var assemblies = new List<Assembly>(refAssemblies);
+            if (transformerAssemblies != null)
+                assemblies.AddRange(transformerAssemblies);
+
+            var types = assemblies.SelectMany(e => e.GetTypes().Where(x => !x.IsAbstract));
+
+            var fieldInstType = typeof(ITransformFieldInst);
+            var fieldDefType = typeof(TransformField);
+            var fieldDefs = new List<Type>();
+
+            var actionInstType = typeof(ITransformActionInst);
+            var actionDefType = typeof(TransformAction);
+            var actionDefs = new List<Type>();
+
+            foreach (var e in types)
+            {
+                if (fieldInstType.IsAssignableFrom(e) || actionInstType.IsAssignableFrom(e))
+                    services.AddTransient(e);
+
+                if (fieldDefType.IsAssignableFrom(e))
+                    fieldDefs.Add(e);
+
+                if (actionDefType.IsAssignableFrom(e))
+                    actionDefs.Add(e);
+            }
+            
+            return (fieldDefs, actionDefs);
+        }
+
         private static List<Type> AddLoaders(this IServiceCollection services,
             IEnumerable<Assembly> loaderAssemblies,
-            IEnumerable<string> refDlls)
+            IEnumerable<Assembly> refAssemblies)
         {
             services.AddSingleton<ILoaderFactory, LoaderFactory>();
 
-            var assemblies = loaderAssemblies == null ? new List<Assembly>() : new List<Assembly>(loaderAssemblies);
-            if (refDlls != null)
-                assemblies.AddRange(refDlls.Select(e =>
-                {
-                    var fileInfo = new FileInfo(e);
-                    if (!fileInfo.Exists)
-                        throw new Exception($"File not found {e} to refer.");
-                    return Assembly.LoadFrom(fileInfo.FullName);
-                }));
+            var assemblies = new List<Assembly>(refAssemblies);
+            if (loaderAssemblies != null)
+                assemblies.AddRange(loaderAssemblies);
 
-            var types = new List<Type> { typeof(ConsoleLoaderInst) };
-            types.AddRange(assemblies
-                   .SelectMany(e => e.GetTypes())
-                   .Where(e => typeof(ILoaderInst).IsAssignableFrom(e) && !e.IsAbstract));
+            var types = assemblies.SelectMany(e => e.GetTypes().Where(x => !x.IsAbstract));
 
-            foreach (var type in types)
-                services.AddTransient(type);
+            var loaderInstType = typeof(ILoaderInst);
+            var loaderDefType = typeof(Loader);
+            var loaderDefs = new List<Type>();
 
-            types =  new List<Type> { typeof(ConsoleLoader) };
-            types.AddRange(assemblies
-                   .SelectMany(e => e.GetTypes())
-                   .Where(e => typeof(Loader).IsAssignableFrom(e) && !e.IsAbstract));
+            foreach (var e in types)
+            {
+                if (loaderInstType.IsAssignableFrom(e))
+                    services.AddTransient(e);
 
-            return types;
+                if (loaderDefType.IsAssignableFrom(e))
+                    loaderDefs.Add(e);
+            }
+
+            services.AddSingleton<ConsoleLoaderInst>();
+            loaderDefs.Add(typeof(ConsoleLoader));
+
+            return loaderDefs;
         }
+
+        private static IEnumerable<Assembly> GetRefAssemblies(this IEnumerable<string> refDlls)
+            => refDlls.Select(e =>
+            {
+                var fileInfo = new FileInfo(e);
+                if (!fileInfo.Exists)
+                    throw new Exception($"File not found {e} to refer.");
+                return Assembly.LoadFrom(fileInfo.FullName);
+            });
     }
 }

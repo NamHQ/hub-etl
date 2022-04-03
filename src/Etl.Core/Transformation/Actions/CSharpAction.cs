@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Etl.Core.Transformation.Actions
 {
-    public class CSharpAction : TransformAction
+    public class CSharpAction : TransformAction<CSharpActionInst>
     {
         public string Code { get; set; }
-        private readonly Func<string, ExtractedRecord, object> _executor;
+        public readonly Func<string, ExtractedRecord, object> Executor;
 
         public CSharpAction()
         {
@@ -20,26 +20,20 @@ namespace Etl.Core.Transformation.Actions
             sb.Append("}}}");
 
             var (method, instance) = CShapCompiler.BuildExecutor(sb.ToString(), namespaceName, className, methodName);
-            _executor = (value, record) => method.Invoke(instance, new object[] { record, value });
-        }
-
-
-        public override ITransformActionInst CreateInstance(IServiceProvider sp)
-        {
-            var inst = new CSharpActionInst
-            {
-                Executor = _executor
-            };
-            return inst;
+            Executor = (value, record) => method.Invoke(instance, new object[] { record, value });
         }
     }
 
-    public class CSharpActionInst : TransformActionInst<object>
+    public class CSharpActionInst : TransformActionInst<CSharpAction, object>
     {
-        public Func<string, ExtractedRecord, object> Executor;
+        public Func<string, ExtractedRecord, object> _executor;
 
+        protected override void Initialize(CSharpAction definition, IServiceProvider sp)
+            => _executor = definition.Executor;
+        
         protected override object Execute(object input, ActionArgs args)
-            => Executor(input as string, args.Record);
+            => _executor(input as string, args.Record);
+
         
     }
 }

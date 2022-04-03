@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 
 namespace Etl.Storage
 {
-    public class CsvLoader : FileLoaderDef<CsvLoaderInst, CsvLoader>
+    public class CsvLoader : FileLoader<CsvLoaderInst, CsvLoader>
     {
         [XmlAttribute]
         public string Delimiter { get; set; } = "|";

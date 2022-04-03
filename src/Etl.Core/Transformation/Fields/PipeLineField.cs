@@ -1,6 +1,7 @@
 ﻿using Etl.Core.Extraction;
 using Etl.Core.Scanner;
 using Etl.Core.Transformation.Actions;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,41 +10,45 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class PipeLineField : TransformField
+    public abstract class PipeLineField : TransformField<PipeLineFieldInst>
     {
         [XmlElement("Actions")]
         public List<TransformAction> Actions { get; set; } = new();
 
-        protected abstract TransformAction MainAction { get; }
-
-        protected override ITransformFieldInst OnCreateInstance(IServiceProvider sp)
-        {
-            var instance = new PipeLineFieldInst
-            {
-                PipeLine = new List<TransformAction>(Actions) { MainAction }
-                    .OrderBy(e => e.Order)
-                    .Select(e => e.CreateInstance(sp))
-                    .ToList()
-            };
-
-            return instance;
-        }
+        public abstract TransformAction DefaultAction { get; }
     }
 
-    public class PipeLineFieldInst : TransformFieldInst
+    public class PipeLineFieldInst : TransformFieldInst<PipeLineField, object>
     {
-        public List<ITransformActionInst> PipeLine { get; set; }
+        private List<ITransformActionInst> _pipeLine;
+
+        public override void Initialize(PipeLineField definition, IServiceProvider sp)
+        {
+            var actions = new List<TransformAction>(definition.Actions);
+            if (definition.DefaultAction != null)
+                actions.Add(definition.DefaultAction);
+
+            _pipeLine = actions
+                     .OrderBy(e => e.Order)
+                     .Select(e =>
+                        {
+                            var action = (ITransformActionInst) sp.GetRequiredService(e.ActionType);
+                            (action as IInitialization)?.Initialize(e, sp);
+                            return action;
+                         })
+                     .ToList();
+        }
 
         public override object Transform(ExtractedRecord record)
         {
             record.TryGetValue(ParserField, out IExtractedInfo info);
-            string rawValue = info == null ? null : record.Block.GetValue(info);
+            string text = info == null ? null : record.Block.GetValue(info);
 
-            object value = rawValue;
+            object value = text;
             var args = new ActionArgs(record);
             ITransformActionInst currentAction = default;
 
-            foreach (var action in PipeLine)
+            foreach (var action in _pipeLine)
                 try
                 {
                     currentAction = action;
@@ -51,13 +56,12 @@ namespace Etl.Core.Transformation.Fields
                 }
                 catch
                 {
-                    throw Stop(record.Block, info, $"{currentAction.GetType().Name}({value ?? "NULL"})", rawValue);
+                    throw Stop(record.Block, info, $"{currentAction.GetType().Name.Replace("ActionInst", "")}({value ?? "NULL"})", text);
                 }
 
             if (Required && value == null)
-                throw Stop(record.Block, info, "Required", rawValue);
+                throw Stop(record.Block, info, "Required", text);
 
-            
             return value;
         }
 

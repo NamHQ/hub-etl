@@ -8,14 +8,14 @@ namespace Etl.Core.Load
 
     public abstract class Loader
     {
-        protected internal abstract Type LoaderType { get; }
+        protected internal abstract Type InstanceType { get; }
     }
 
     public abstract class Loader<TInst, TDef> : Loader
         where TInst : LoaderInst<TInst, TDef>
         where TDef : Loader<TInst, TDef>
     {
-        protected internal override Type LoaderType => typeof(TInst);
+        protected internal override Type InstanceType => typeof(TInst);
     }
 
     //IMPORTANT: ILoaderArgs is transient, it is created with workflow.
