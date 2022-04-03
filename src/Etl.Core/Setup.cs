@@ -29,7 +29,7 @@ namespace Etl.Core
 
             var loaderDefs = services.AddLoaders(loaderAssemblies, refAssemblies);
 
-            var etlFactory = new EtlFactory(etlSetting, loaderDefs);
+            var etlFactory = new EtlFactory(etlSetting, fieldDefs, actionDefs, loaderDefs);
             services.AddSingleton(etlFactory);
             services.AddSingleton<IEtlFactory>(etlFactory);
 

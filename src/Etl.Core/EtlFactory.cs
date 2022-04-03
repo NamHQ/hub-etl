@@ -1,4 +1,6 @@
 ﻿using Etl.Core.Settings;
+using Etl.Core.Transformation;
+using Etl.Core.Transformation.Fields;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,21 +21,23 @@ namespace Etl.Core
         private readonly Dictionary<string, (Etl definition, EtlInst instance)> _caches = new();
         private readonly ConfigFilesSetting _setting;
         private readonly List<(Regex matcher, string configFile)> _matchers = new();
-        private readonly XmlAttributeOverrides _loaderDefsAttrOverrides;
+        private readonly XmlAttributeOverrides _attributeOverrides = new();
 
-        public EtlFactory(EtlSetting setting, List<Type> loaderDefs)
+        public EtlFactory(EtlSetting setting, List<Type> fieldDefs, List<Type> actionDefs, List<Type> loaderDefs)
         {
             _setting = setting?.ConfigFiles ?? new ConfigFilesSetting();
 
             foreach (var e in _setting.Matches)
                 _matchers.Add((new Regex(e.Key, RegexOptions.Compiled), e.Value));
 
-            _loaderDefsAttrOverrides = GetAttributeOverrides(loaderDefs);
+            AddFieldDefsOverrides(_attributeOverrides, fieldDefs);
+            AddActionDefsOverrides(_attributeOverrides, actionDefs);
+            AddLoaderDefsOverrides(_attributeOverrides, loaderDefs);
         }
 
         public void Save(Etl config, string filePath)
         {
-            var serializer = new XmlSerializer(typeof(Etl), _loaderDefsAttrOverrides);
+            var serializer = new XmlSerializer(typeof(Etl), _attributeOverrides);
             using var stream = new StreamWriter(filePath);
 
             serializer.Serialize(stream, config);
@@ -61,7 +65,7 @@ namespace Etl.Core
                 {
                     if (!_caches.TryGetValue(configFilePath, out cache))
                     {
-                        var serializer = new XmlSerializer(typeof(Etl), _loaderDefsAttrOverrides);
+                        var serializer = new XmlSerializer(typeof(Etl), _attributeOverrides);
                         serializer.UnknownNode += (sender, e) => Console.WriteLine("Unknown Node:" + e.Name + "\t" + e.Text);
                         serializer.UnknownAttribute += (sender, e) => Console.WriteLine("Unknown Attribute " + e.Attr.Name + "='" + e.Attr.Value + "'");
                         serializer.UnknownElement += (sender, e) => Console.WriteLine("Unknown Element:" + e.Element, e);
@@ -81,10 +85,8 @@ namespace Etl.Core
 
             return cache;
         }
-        private static XmlAttributeOverrides GetAttributeOverrides(List<Type> loaderDefs)
+        private static void AddLoaderDefsOverrides(XmlAttributeOverrides attrOverrides, List<Type> loaderDefs)
         {
-            var attrOverrides = new XmlAttributeOverrides();
-
             var attrs = new XmlAttributes();
             foreach (var e in loaderDefs)
                 attrs.XmlArrayItems.Add(new XmlArrayItemAttribute
@@ -93,8 +95,30 @@ namespace Etl.Core
                     Type = e
                 });
             attrOverrides.Add(typeof(Etl), nameof(Etl.Loaders), attrs);
+        }
 
-            return attrOverrides;
+        private static void AddFieldDefsOverrides(XmlAttributeOverrides attrOverrides, List<Type> fieldDefs)
+        {
+            var attrs = new XmlAttributes();
+            foreach (var e in fieldDefs)
+                attrs.XmlArrayItems.Add(new XmlArrayItemAttribute
+                {
+                    ElementName = e.Name.Replace("Field", ""),
+                    Type = e
+                });
+            attrOverrides.Add(typeof(Transformer), nameof(Transformer.Fields), attrs);
+        }
+
+        private static void AddActionDefsOverrides(XmlAttributeOverrides attrOverrides, List<Type> actionDefs)
+        {
+            var attrs = new XmlAttributes();
+            foreach (var e in actionDefs)
+                attrs.XmlArrayItems.Add(new XmlArrayItemAttribute
+                {
+                    ElementName = e.Name.Replace("Action", ""),
+                    Type = e
+                });
+            attrOverrides.Add(typeof(PipeLineField), nameof(PipeLineField.Actions), attrs);
         }
     }
 }

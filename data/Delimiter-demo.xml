@@ -1,1 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?><Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="100" FlushBatch="2"><Extraction LayoutStartOffset="3"><Comments /><Layout Direction="Column" StartOffset="0" MaxStart="0" EndOffset="1" Repeat="true"><Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" DataField="F1" Repeat="false" /><Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F2" Repeat="false" /><Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F3" Repeat="false" /><Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F4" Repeat="false" /><Layout Direction="Row" StartOffset="1" MaxStart="0" EndOffset="0" DataField="F5" Repeat="false" /></Layout></Extraction><Transformation><Fields><Integer Field="F3" Required="true" /></Fields><Massage /></Transformation><Loaders><Csv OutPath="$path/$name.result" Delimiter="|"><Fields /></Csv></Loaders></Etl>
+<?xml version="1.0" encoding="utf-8"?>
+<Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="100" FlushBatch="2">
+	<Extraction LayoutStartOffset="3">
+		<Comments />
+		<Layout Direction="Column" StartOffset="0" MaxStart="0" EndOffset="1" Repeat="true">
+			<Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" DataField="F1" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F2" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F3" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F4" Repeat="false" />
+			<Layout Direction="Row" StartOffset="1" MaxStart="0" EndOffset="0" DataField="F5" Repeat="false" />
+		</Layout>
+	</Extraction>
+	<Transformation>
+		<Fields>
+			<Integer Field="F3" Required="true">
+				<Actions />
+			</Integer>
+			<PipeLine Field="F4" Required="false">
+				<Actions>
+					<String Order="0" />
+				</Actions>
+			</PipeLine>
+		</Fields>
+		<Massage />
+	</Transformation>
+	<Loaders>
+		<Csv OutPath="$path/$name.result" Delimiter="|">
+			<Fields />
+		</Csv>
+	</Loaders>
+</Etl>

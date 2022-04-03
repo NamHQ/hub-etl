@@ -2,21 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
     public class GroupField : TransformField<GroupFieldInst>
     {
-        [XmlArrayItem("Integer", typeof(IntegerField))]
-        //[XmlArrayItem("Float", typeof(FLoatField))]
-        //[XmlArrayItem("Boolean", typeof(BooleanField))]
-        //[XmlArrayItem("Date", typeof(DateField))]
-        //[XmlArrayItem("String", typeof(StringField))]
-        //[XmlArrayItem("Hash", typeof(HashField))]
-        //[XmlArrayItem("Encrypt", typeof(EncryptField))]
-        //[XmlArrayItem("Group", typeof(GroupField))]
-        //[XmlArrayItem("Array", typeof(ArrayField))]
         public virtual List<TransformField> Fields { get; set; } = new();
 
         public HashSet<string> IgnoreParserFields { get; set; } = new();

@@ -10,12 +10,11 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class PipeLineField : TransformField<PipeLineFieldInst>
+    public class PipeLineField : TransformField<PipeLineFieldInst>
     {
-        [XmlElement("Actions")]
         public List<TransformAction> Actions { get; set; } = new();
 
-        public abstract TransformAction DefaultAction { get; }
+        public virtual TransformAction DefaultAction { get; } = null;
     }
 
     public class PipeLineFieldInst : TransformFieldInst<PipeLineField, object>

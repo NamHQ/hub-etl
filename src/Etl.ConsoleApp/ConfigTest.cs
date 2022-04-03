@@ -303,7 +303,8 @@ namespace Etl.ConsoleApp
                 {
                     Fields =
                     {
-                        new IntegerField { Field="F3", Required=true }
+                        new IntegerField { Field="F3", Required=true },
+                        new PipeLineField { Field="F4", Actions={ new StringAction()}}
                     }
                 },
                 Loaders =
