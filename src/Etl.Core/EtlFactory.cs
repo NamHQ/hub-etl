@@ -66,10 +66,10 @@ namespace Etl.Core
                     if (!_caches.TryGetValue(configFilePath, out cache))
                     {
                         var serializer = new XmlSerializer(typeof(Etl), _attributeOverrides);
-                        serializer.UnknownNode += (sender, e) => Console.WriteLine("Unknown Node:" + e.Name + "\t" + e.Text);
-                        serializer.UnknownAttribute += (sender, e) => Console.WriteLine("Unknown Attribute " + e.Attr.Name + "='" + e.Attr.Value + "'");
-                        serializer.UnknownElement += (sender, e) => Console.WriteLine("Unknown Element:" + e.Element, e);
-                        serializer.UnreferencedObject += (sender, e) => Console.WriteLine("Unknown UnreferencedObject " + e.ToString());
+                        //serializer.UnknownNode += (sender, e) => Console.WriteLine("Unknown Node:" + e.Name + "\t" + e.Text);
+                        //serializer.UnknownAttribute += (sender, e) => Console.WriteLine("Unknown Attribute " + e.Attr.Name + "='" + e.Attr.Value + "'");
+                        //serializer.UnknownElement += (sender, e) => Console.WriteLine("Unknown Element:" + e.Element, e);
+                        //serializer.UnreferencedObject += (sender, e) => Console.WriteLine("Unknown UnreferencedObject " + e.ToString());
 
                         if (!File.Exists(configFilePath))
                             throw new Exception($"Not found config file '{configFilePath}'");

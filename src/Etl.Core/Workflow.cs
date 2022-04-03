@@ -15,9 +15,8 @@ namespace Etl.Core
         private readonly IEtlFactory _etlFactory;
         
         private ICompilerEvent _events;
-        public List<Loader> _loaders = new();
-        //private List<(Loader definition, ILoaderInst instance)> _loaders = new();
         private (Etl definition, EtlInst instance) _etl;
+        private List<Loader> _extraLoaders = new();
 
         public Workflow(EtlSetting setting, IEtlFactory etlFactory, IServiceProvider sp)
         {
@@ -48,17 +47,14 @@ namespace Etl.Core
         public Workflow SetConfig(Etl definition, EtlInst instance = null)
         {
             if (definition != null)
-            {
-                _loaders = definition.Loaders;
                 _etl = (definition, instance ?? new EtlInst(definition));
-            }
 
             return this;
         }
 
         public Workflow AddLoaders(params Loader[] loaders)
         {
-            _loaders.AddRange(loaders);
+            _extraLoaders.AddRange(loaders);
 
             return this;
         }
@@ -75,7 +71,7 @@ namespace Etl.Core
             }
 
             new WorkflowInst(_etlSetting, _etl.definition, _etl.instance, _events)
-                .Start(dataFilePath, _sp, take, skip);
+                .Start(dataFilePath, _sp, _extraLoaders, take, skip);
         }
     }
 }

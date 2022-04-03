@@ -41,7 +41,7 @@ namespace Etl.Core
             _transformResult = new TransformResult(_flushBatch);
         }
 
-        public void Start(string dataFilePath, IServiceProvider sp, int? take = null, int? skip = null)
+        public void Start(string dataFilePath, IServiceProvider sp, List<Loader> extraLoaders = null, int? take = null, int? skip = null)
         {
             _start = DateTime.Now;
             List<List<TextLine>> scannedBatch = new();
@@ -51,13 +51,14 @@ namespace Etl.Core
                 dataFilePath,
                 () => new StreamReader(dataFilePath),
                 sp,
+                extraLoaders,
                 textLines => scannedBatch = OnScanned(textLines, scannedBatch, extractTasks));
 
             _transformInstance = transformInstance;
             _loaderInstances = loaderInstances;
             _sequenceFlushBuffer = new SequenceFlushBuffer(OnTransformed);
 
-            scanner.Start();
+            scanner.Start(take, skip);
             scanner.Dispose();
 
             Task.WaitAll(extractTasks.ToArray());

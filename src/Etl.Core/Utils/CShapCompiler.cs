@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Etl.Core.Extraction;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System;
@@ -17,7 +18,7 @@ namespace Etl.Core.Utils
 
         private static (List<MetadataReference> refMeta, string refUsing) BuildRef()
         {
-            var refType = new HashSet<Type> { typeof(object), typeof(StringBuilder), typeof(List<object>), typeof(Console) };
+            var refType = new HashSet<Type> { typeof(object), typeof(StringBuilder), typeof(List<object>), typeof(Console), typeof(ExtractedRecord) };
 
             var locations = new HashSet<string>();
             var namespaces = new HashSet<string>();

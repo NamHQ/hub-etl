@@ -5,19 +5,23 @@ using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class GroupField : TransformField<GroupFieldInst>
+    public abstract class RecordField<TDef, TInst> : TransformField<TInst>
+        where TDef : RecordField<TDef, TInst>
+        where TInst : RecordFieldInst<TDef, TInst>
     {
         public virtual List<TransformField> Fields { get; set; } = new();
 
         public HashSet<string> IgnoreParserFields { get; set; } = new();
     }
 
-    public class GroupFieldInst : TransformFieldInst<GroupField, TransformResult>
+    public class RecordFieldInst<TDef, TInst> : TransformFieldInst<TDef, TransformResult>
+        where TDef : RecordField<TDef, TInst>
+        where TInst : RecordFieldInst<TDef, TInst>
     {
         private readonly List<ITransformFieldInst> _fields = new();
         private ArrayFieldInst _flatArray;
 
-        public override void Initialize(GroupField definition, IServiceProvider sp)
+        public override void Initialize(TDef definition, IServiceProvider sp)
         {
             foreach (var e in definition.Fields)
             {
@@ -67,5 +71,8 @@ namespace Etl.Core.Transformation.Fields
             return result;
         }
     }
+
+    public class RecordField : RecordField<RecordField, RecordFieldInst> { }
+    public class RecordFieldInst : RecordFieldInst<RecordField, RecordFieldInst> { }
 
 }

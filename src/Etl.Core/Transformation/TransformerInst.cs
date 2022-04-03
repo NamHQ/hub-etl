@@ -16,7 +16,7 @@ namespace Etl.Core.Transformation
         private const string CLASS = "tempClass";
         private const string METHOD = "Execute";
         private readonly Assembly _massageAssembly;
-        private readonly GroupField _gropuField;
+        private readonly RecordField _recordField;
 
         private Func<List<IDictionary<string, object>>, List<IDictionary<string, object>>> _applyMassage;
         public IReadOnlyCollection<TransformField> AllFields { get; }
@@ -24,11 +24,11 @@ namespace Etl.Core.Transformation
         public TransformerInst(Transformer transformDef, Layout layoutDef)
         {
             _massageAssembly = CompileCSharpCode(transformDef.Massage);
-            _gropuField = new GroupField { Fields = transformDef.Fields };
+            _recordField = new RecordField { Fields = transformDef.Fields };
 
-            MakeSureMergeParserFields(_gropuField, layoutDef);
+            MakeSureMergeParserFields(_recordField, layoutDef);
 
-            AllFields = _gropuField.Fields;
+            AllFields = _recordField.Fields;
         }
 
         public Func<ExtractedRecord, TransformResult> CreateInstance(IServiceProvider sp)
@@ -40,16 +40,16 @@ namespace Etl.Core.Transformation
                 _applyMassage = batch => method.Invoke(instance, new object[] { batch }) as List<IDictionary<string, object>>;
             }
 
-            var groupFieldInst = new GroupFieldInst();
-            groupFieldInst.Initialize(_gropuField, sp);
+            var recordFieldInst = new RecordFieldInst();
+            recordFieldInst.Initialize(_recordField, sp);
 
-            return record => groupFieldInst.Transform(record);
+            return record => recordFieldInst.Transform(record);
         }
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
             => _applyMassage?.Invoke(batch) ?? batch;
 
-        private static void MakeSureMergeParserFields(GroupField mapFields, Layout layout)
+        private static void MakeSureMergeParserFields(RecordField mapFields, Layout layout)
         {
             List<TransformField> parseFields = new();
             GetParserFieldsRecursive(layout, parseFields);

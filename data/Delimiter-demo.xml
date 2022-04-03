@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="100" FlushBatch="2">
+<Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="1" FlushBatch="2">
 	<Extraction LayoutStartOffset="3">
 		<Comments />
 		<Layout Direction="Column" StartOffset="0" MaxStart="0" EndOffset="1" Repeat="true">

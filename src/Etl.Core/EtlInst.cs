@@ -16,36 +16,28 @@ namespace Etl.Core
     {
         private readonly ExtractorInst _extractor;
         private readonly TransformerInst _transformer;
-        private readonly Func<string, IServiceProvider, List<ILoaderInst>> _createLoaders;
+        private readonly List<Loader> _loaders;
         public IReadOnlyCollection<TransformField> AllFields => _transformer.AllFields;
 
         public EtlInst(Etl etl)
         {
             _extractor = new ExtractorInst(etl.Extraction);
             _transformer = new TransformerInst(etl.Transformation, etl.Extraction.Layout);
-
-            _createLoaders = (dataFile, sp) =>
-            {
-                var loaderArgs = new LoaderArgs(dataFile, _transformer.AllFields);
-                return etl.Loaders.Select(e =>
-                {
-                    var inst = (ILoaderInst)sp.GetRequiredService(e.InstanceType);
-                    inst.Initalize(e, loaderArgs);
-                    return inst;
-                }).ToList();
-            };
+            _loaders = etl.Loaders;
         }
 
         public (
             Scanner.Scanner scaner,
             Func<ExtractedRecord, TransformResult> transformInstance,
             List<ILoaderInst> loaders)
-            Start(string dataFile, Func<StreamReader> getStreamReader, IServiceProvider sp, Action<List<TextLine>> flush)
+            Start(string dataFile, Func<StreamReader> getStreamReader, IServiceProvider sp, List<Loader> extraLoaders, Action<List<TextLine>> flush)
         {
+            
+
             return (
                 _extractor.CreateScanner(getStreamReader, flush),
                 _transformer.CreateInstance(sp),
-                _createLoaders(dataFile, sp));
+                CreateLoaderInstances(dataFile, sp, extraLoaders));
         }
 
         public ExtractedRecord Extract(List<TextLine> textLines, ICompilerEvent events)
@@ -53,5 +45,20 @@ namespace Etl.Core
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
             => _transformer.ApplyMassage(batch);
+
+        private List<ILoaderInst> CreateLoaderInstances(string dataFile, IServiceProvider sp, List<Loader> extraLoaders)
+        {
+            var allLoaders = new List<Loader>(_loaders);
+            if (extraLoaders != null)
+                allLoaders.AddRange(extraLoaders);
+
+            var loaderArgs = new LoaderArgs(dataFile, _transformer.AllFields);
+            return allLoaders.Select(e =>
+            {
+                var inst = (ILoaderInst)sp.GetRequiredService(e.InstanceType);
+                inst.Initalize(e, loaderArgs);
+                return inst;
+            }).ToList();
+        }
     }
 }
