@@ -1,5 +1,4 @@
 ﻿using Etl.Core;
-using Etl.Core.Load;
 using Etl.Storage;
 using Etl.Tranformation;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Etl.ConsoleApp
 {
@@ -33,27 +31,18 @@ namespace Etl.ConsoleApp
 
                 //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
 
-                var builder = sp.GetRequiredService<WorkflowBuilder>()
+                sp.GetRequiredService<WorkflowBuilder>()
                    .SetConfig(args.Config)
                    .SetConfig(args.ConfigFile)                  //Override args.Config
-                                                                //.AddLoaders(new CsvLoaderDef())
-                                                                //.AddLoaders(new ConsoleLoader())
+                    //.AddLoaders(new ConsoleLoader())
                    .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
                         onTransformed: args.OnTransformed,
-                        onTransformedBatch: args.OnTransformedBatch));
-
-                var workflow1 = builder.Build(args.DataFile);
-                var workflow2 = builder.Build(args.DataFile + "1");
-
-                var tasks = new List<Task> {
-                    Task.Run(() => workflow1.Start()),
-                    Task.Run(() => workflow2.Start()),
-                };
-
-                Task.WaitAll(tasks.ToArray());
+                        onTransformedBatch: args.OnTransformedBatch))
+                   .Build(args.DataFile)
+                   .Start();
             }
             catch (Exception ex)
             {

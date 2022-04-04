@@ -57,9 +57,9 @@ namespace Etl.Core.Transformation.Fields
                         continue;
 
                     if (newRecord != null)
-                        newRecord[field.DataField] = val;
+                        newRecord[field.Alias] = val;
                     else
-                        result.Items.ForEach(e => e[field.DataField] = val);
+                        result.Items.ForEach(e => e[field.Alias] = val);
                 }
             }
             catch (Exception ex)

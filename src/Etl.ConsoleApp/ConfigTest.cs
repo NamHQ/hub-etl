@@ -156,65 +156,65 @@ namespace Etl.ConsoleApp
 
                 Transformation = {
                     Fields= {
-                        new ArrayField {  ParserField="BATCHES", Flat=true, Fields={
-                            new ArrayField { ParserField="MERCHANTS", Flat=true, Fields={
-                                new ArrayField { ParserField="TRANSACTIONS", Flat=true, IgnoreParserFields={ "_PosAdndA", "_Mktsp1AdndaE", }, Fields={
-                                    new ArrayField { ParserField="DOUBLE TRANSACTIONS", Flat=true, Fields={
-                                        new StringField { Field="BinNumber", ParserField="AccountNumber", Actions= { new SubStringAction { EndOffset=6} } },
-                                        new StringField { Field="LastFourAccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { Start=@"\d{4}$", EndOffset=4} } },
-                                        new StringField { Field="First4AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=4}} },
-                                        new StringField { Field="First5AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=5}} },
-                                        new StringField { Field="First6AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=6}} },
-                                        new StringField { Field="First7AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=7}} },
-                                        new StringField { Field="First8AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=8}} },
-                                        new StringField { Field="First9AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=9} } },
-                                        new StringField { Field="First10AccountNumber", ParserField="AccountNumber",Actions= {new SubStringAction { EndOffset=10} } },
-                                        new StringField { Field="First11AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=11} } },
-                                        new StringField { Field="First12AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=12} } },
-                                        new HashField { Field="HashedFirst12AccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=12}} },
-                                        new EncryptField { Field="FirstTwelveAccountNumber", ParserField="AccountNumber", Actions= {new SubStringAction { EndOffset=12} } },
-                                        new HashField { Field="HashedAccountNumber", ParserField="AccountNumber"},
-                                        new EncryptField { Field="AccountNumber" },
+                        new ArrayField {  DataField="BATCHES", Flat=true, Fields={
+                            new ArrayField { DataField="MERCHANTS", Flat=true, Fields={
+                                new ArrayField { DataField="TRANSACTIONS", Flat=true, IgnoreParserFields={ "_PosAdndA", "_Mktsp1AdndaE", }, Fields={
+                                    new ArrayField { DataField="DOUBLE TRANSACTIONS", Flat=true, Fields={
+                                        new StringField { Alias="BinNumber", DataField="AccountNumber", Actions= { new SubStringAction { EndOffset=6} } },
+                                        new StringField { Alias="LastFourAccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { Start=@"\d{4}$", EndOffset=4} } },
+                                        new StringField { Alias="First4AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=4}} },
+                                        new StringField { Alias="First5AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=5}} },
+                                        new StringField { Alias="First6AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=6}} },
+                                        new StringField { Alias="First7AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=7}} },
+                                        new StringField { Alias="First8AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=8}} },
+                                        new StringField { Alias="First9AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=9} } },
+                                        new StringField { Alias="First10AccountNumber", DataField="AccountNumber",Actions= {new SubStringAction { EndOffset=10} } },
+                                        new StringField { Alias="First11AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=11} } },
+                                        new StringField { Alias="First12AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=12} } },
+                                        new HashField { Alias="HashedFirst12AccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=12}} },
+                                        new EncryptField { Alias="FirstTwelveAccountNumber", DataField="AccountNumber", Actions= {new SubStringAction { EndOffset=12} } },
+                                        new HashField { Alias="HashedAccountNumber", DataField="AccountNumber"},
+                                        new EncryptField { Alias="AccountNumber" },
                                     } },
 
-                                    new StringField { Field="BinNumber", ParserField="AccountNumber",               Actions= {new SubStringAction { EndOffset=6} }},
-                                    new StringField { Field="LastFourAccountNumber", ParserField="AccountNumber",   Actions= {new SubStringAction { Start=@"\d{4}$", EndOffset=4} } },
-                                    new StringField { Field="First4AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=4} }},
-                                    new StringField { Field="First5AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=5} }},
-                                    new StringField { Field="First6AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=6} }},
-                                    new StringField { Field="First7AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=7} }},
-                                    new StringField { Field="First8AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=8} }},
-                                    new StringField { Field="First9AccountNumber", ParserField="AccountNumber",     Actions= {new SubStringAction { EndOffset=9} } },
-                                    new StringField { Field="First10AccountNumber", ParserField="AccountNumber",    Actions= {new SubStringAction { EndOffset=10}} },
-                                    new StringField { Field="First11AccountNumber", ParserField="AccountNumber",    Actions= {new SubStringAction { EndOffset=11}} },
-                                    new StringField { Field="First12AccountNumber", ParserField="AccountNumber",    Actions= {new SubStringAction { EndOffset=12}}},
-                                    new HashField { Field="HashedFirst12AccountNumber", ParserField="AccountNumber",Actions= {new SubStringAction { EndOffset=12}} },
-                                    new EncryptField { Field="FirstTwelveAccountNumber", ParserField="AccountNumber",Actions= {new SubStringAction { EndOffset=12}}},
-                                    new HashField { Field="HashedAccountNumber", ParserField="AccountNumber"},
-                                    new EncryptField { Field="AccountNumber" },
+                                    new StringField { Alias="BinNumber", DataField="AccountNumber",               Actions= {new SubStringAction { EndOffset=6} }},
+                                    new StringField { Alias="LastFourAccountNumber", DataField="AccountNumber",   Actions= {new SubStringAction { Start=@"\d{4}$", EndOffset=4} } },
+                                    new StringField { Alias="First4AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=4} }},
+                                    new StringField { Alias="First5AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=5} }},
+                                    new StringField { Alias="First6AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=6} }},
+                                    new StringField { Alias="First7AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=7} }},
+                                    new StringField { Alias="First8AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=8} }},
+                                    new StringField { Alias="First9AccountNumber", DataField="AccountNumber",     Actions= {new SubStringAction { EndOffset=9} } },
+                                    new StringField { Alias="First10AccountNumber", DataField="AccountNumber",    Actions= {new SubStringAction { EndOffset=10}} },
+                                    new StringField { Alias="First11AccountNumber", DataField="AccountNumber",    Actions= {new SubStringAction { EndOffset=11}} },
+                                    new StringField { Alias="First12AccountNumber", DataField="AccountNumber",    Actions= {new SubStringAction { EndOffset=12}}},
+                                    new HashField { Alias="HashedFirst12AccountNumber", DataField="AccountNumber",Actions= {new SubStringAction { EndOffset=12}} },
+                                    new EncryptField { Alias="FirstTwelveAccountNumber", DataField="AccountNumber",Actions= {new SubStringAction { EndOffset=12}}},
+                                    new HashField { Alias="HashedAccountNumber", DataField="AccountNumber"},
+                                    new EncryptField { Alias="AccountNumber" },
 
-                                    new StringField { Field="PointOfSale", ParserField="AuthAdndaC" },
-                                    new StringField { Field="CustomerIdMethod", ParserField="AuthAdndaD" },
-                                    new StringField { Field="MOTOIndicator", ParserField="AuthAdndaF" },
-                                    new StringField { Field="Keyed", ParserField="AuthAdndaC", Actions= {new CSharpAction {
+                                    new StringField { Alias="PointOfSale", DataField="AuthAdndaC" },
+                                    new StringField { Alias="CustomerIdMethod", DataField="AuthAdndaD" },
+                                    new StringField { Alias="MOTOIndicator", DataField="AuthAdndaF" },
+                                    new StringField { Alias="Keyed", DataField="AuthAdndaC", Actions= {new CSharpAction {
                                         Code= "return V == \"01\" ? \"Y\" : null;"
                                     }} },
 
-                                    new StringField { Field="TransactionTime", ParserField="TransactionTime", Actions= {new CSharpAction{
+                                    new StringField { Alias="TransactionTime", DataField="TransactionTime", Actions= {new CSharpAction{
                                         Code= "return V == null || V.Length < 6 ? null : V.Substring(0, 2) + \":\" + V.Substring(2, 2) + \":\" + V.Substring(4, 2);"
                                     }} },
 
-                                    new StringField { Field="CardInputCapability", ParserField="_PosAdndA", Actions= {new SubStringAction{ StartOffset=28, EndOffset=1} } },
-                                    new StringField { Field="CardInputMode", ParserField="_PosAdndA", Actions={new SubStringAction{ StartOffset=36, EndOffset=1} } },
+                                    new StringField { Alias="CardInputCapability", DataField="_PosAdndA", Actions= {new SubStringAction{ StartOffset=28, EndOffset=1} } },
+                                    new StringField { Alias="CardInputMode", DataField="_PosAdndA", Actions={new SubStringAction{ StartOffset=36, EndOffset=1} } },
 
-                                    new StringField { Field="Mktsp1AdndaE", ParserField="_Mktsp1AdndaE", Actions={new CSharpAction{
+                                    new StringField { Alias="Mktsp1AdndaE", DataField="_Mktsp1AdndaE", Actions={new CSharpAction{
                                         Code= "return V != null && double.TryParse(V, out double a) && a != 0 ? (a / 100).ToString() : null;"
                                     }} },
-                                    new StringField { Field="AuthAmount", ParserField="_Mktsp1AdndaE", Actions={new CSharpAction{
+                                    new StringField { Alias="AuthAmount", DataField="_Mktsp1AdndaE", Actions={new CSharpAction{
                                         Code= "return V != null && double.TryParse(V, out double a) ? (a / 100).ToString() : null;"
                                     }} },
 
-                                    new StringField { Field="InvoiceNumber", ParserField="MarketData", Actions={new CSharpAction{
+                                    new StringField { Alias="InvoiceNumber", DataField="MarketData", Actions={new CSharpAction{
                                         Code="return !string.IsNullOrEmpty(V) && (V[0] == '1' || V[0] == '5') ? V.Substring(1) : null;"
                                     }} },
                                 }}
@@ -287,25 +287,37 @@ namespace Etl.ConsoleApp
         {
             return new Core.Etl
             {
-                ScanBatch = 1,
+                ScanBatch = 10,
                 FlushBatch = 2,
                 Extraction =
                 {
                     LayoutStartOffset = 3 ,
-                    Layout = new Layout  { EndOffset =1, Repeat=true, Direction=LayoutDirection.Column, Children= {
-                        new Layout{ End=@"\|", DataField="F1"},
-                        new Layout{ StartOffset=1, End=@"\|", DataField="F2"},
-                        new Layout{ StartOffset=1, End=@"\|", DataField="F3"},
-                        new Layout{ StartOffset=1, End=@"\|", DataField="F4"},
-                        new Layout{ StartOffset=1, DataField="F5"}
+                    Layout = new Layout { Start=@"\A---main", End=@"\A---main", Repeat=true, Children={
+                        new Layout  {StartOffset=1, Direction=LayoutDirection.Column, Children= {
+                            new Layout{ End=@"\|", DataField="F1"},
+                            new Layout{ StartOffset=1, End=@"\|", DataField="F2"},
+                            new Layout{ StartOffset=1, End=@"\|", DataField="F3"},
+                        } },
+                        new Layout { Start="---children", Children ={
+                            new Layout  {StartOffset=1, Direction=LayoutDirection.Column, Repeat = true, DataField="Children",  Children= {
+                                new Layout{ End=@"\|", DataField="F4"},
+                                new Layout{ StartOffset=1, End=@"\|", DataField="F5"},
+                                new Layout{ StartOffset=1, End=@"\|", DataField="F6"},
+                            } },
+                        }}
                     } }
                 },
                 Transformation =
                 {
                     Fields =
                     {
-                        new IntegerField { Field="F3", Required=true },
-                        new PipeLineField { Field="F4", Actions={ new StringAction()}}
+                        new IntegerField {DataField="F3"},
+
+                        new ArrayField { DataField="Children", Flat=true, Fields={
+                            new StringField {DataField="F5", Actions={ 
+                                new CheckPatternAction {Pattern="m"}
+                            } },
+                        }}
                     }
                 },
                 Loaders =

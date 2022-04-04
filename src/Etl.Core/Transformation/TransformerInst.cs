@@ -26,9 +26,7 @@ namespace Etl.Core.Transformation
             _massageAssembly = CompileCSharpCode(transformDef.Massage);
             _recordField = new RecordField { Fields = transformDef.Fields };
 
-            MakeSureMergeParserFields(_recordField, layoutDef);
-
-            AllFields = _recordField.Fields;
+            AllFields = MakeSureMergeParserFields(_recordField, layoutDef);
         }
 
         public Func<ExtractedRecord, TransformResult> CreateInstance(IServiceProvider sp)
@@ -49,18 +47,21 @@ namespace Etl.Core.Transformation
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)
             => _applyMassage?.Invoke(batch) ?? batch;
 
-        private static void MakeSureMergeParserFields(RecordField mapFields, Layout layout)
+        private static List<TransformField> MakeSureMergeParserFields(RecordField recordField, Layout layout)
         {
-            List<TransformField> parseFields = new();
-            GetParserFieldsRecursive(layout, parseFields);
+            List<TransformField> extractedFields = new();
+            ToExtractedFields(layout, extractedFields);
 
-            if (mapFields.Fields.Count == 0)
-                mapFields.Fields.AddRange(parseFields);
-            else
-                MergeFieldsRecursive(mapFields.Fields, parseFields, mapFields.IgnoreParserFields);
+            if (recordField.Fields.Count == 0)
+            {
+                recordField.Fields.AddRange(extractedFields);
+                return new List<TransformField>(recordField.Fields);
+            }
+
+            return MergeFields(recordField.Fields, extractedFields, recordField.IgnoreParserFields);
         }
 
-        private static void GetParserFieldsRecursive(Layout layout, List<TransformField> parserFields)
+        private static void ToExtractedFields(Layout layout, List<TransformField> outFields)
         {
             if (layout == null)
                 return;
@@ -69,46 +70,48 @@ namespace Etl.Core.Transformation
             {
                 if (layout.Repeat)
                 {
-                    ArrayField arr = new() { ParserField = layout.DataField };
-                    parserFields.Add(arr);
-                    parserFields = arr.Fields;
+                    ArrayField arr = new() { DataField = layout.DataField };
+                    outFields.Add(arr);
+                    outFields = arr.Fields;
                 }
                 else
-                    parserFields.Add(new StringField { ParserField = layout.DataField });
+                    outFields.Add(new StringField { DataField = layout.DataField });
             }
 
             if (layout.Children != null && layout.Children.Count > 0)
-                layout.Children.ForEach(e => GetParserFieldsRecursive(e, parserFields));
+                layout.Children.ForEach(e => ToExtractedFields(e, outFields));
         }
 
-        private static void MergeFieldsRecursive(List<TransformField> mapFields, List<TransformField> parserFields, HashSet<string> ignoreParserFields)
+        private static List<TransformField> MergeFields(List<TransformField> allTransformFields, List<TransformField> allExtractedFields, HashSet<string> ignoreParserFields)
         {
-            var dictionary = mapFields.ToDictionary(e =>
-            {
-                var dataField = GetFirstNotEmpty(e.Field, e.ParserField);
-                if (string.IsNullOrEmpty(dataField))
-                    throw new Exception($"Fields in {nameof(Transformer)} expect {nameof(e.Field)} or {nameof(e.ParserField)}");
+            var items = new List<TransformField> ();
 
-                return dataField;
-            });
+            var dictionary = allTransformFields.ToDictionary(e => e.DataField);
 
-            foreach (var field in parserFields.Where(x => !ignoreParserFields.Contains(x.ParserField)))
+            foreach (var extractedField in allExtractedFields.Where(x => !ignoreParserFields.Contains(x.DataField)))
             {
-                var parserField = GetFirstNotEmpty(field.ParserField, field.Field);
-                if (!dictionary.TryGetValue(parserField, out TransformField mapField))
+                if (!dictionary.TryGetValue(extractedField.DataField, out TransformField transformField))
                 {
-                    mapFields.Add(field);
+                    allTransformFields.Add(extractedField);
+                    items.Add(extractedField);
                 }
-                else if (field is ArrayField parserArray)
+                else if (extractedField is ArrayField extractedArray)
                 {
-                    if (mapField is not ArrayField mapArray)
-                    {
-                        var mapParserField = GetFirstNotEmpty(mapField.ParserField, mapField.Field);
-                        throw new Exception($"Parser array field {parserField} does not match defined field {mapParserField} {mapField.GetType().Name}");
-                    }
-                    MergeFieldsRecursive(mapArray.Fields, parserArray.Fields, mapArray.IgnoreParserFields);
+                    if (transformField is not ArrayField transfromArray)
+                        throw new Exception($"Extract array field {extractedArray.DataField} does not match defined field {transformField.DataField} {transformField.GetType().Name}");
+                    
+                    var nestedItems = MergeFields(transfromArray.Fields, extractedArray.Fields, transfromArray.IgnoreParserFields);
+
+                    if (transfromArray.Flat)
+                        items.AddRange(nestedItems);
+                    else
+                        items.Add(transfromArray);
                 }
+                else
+                    items.Add(transformField);
             }
+
+            return items;
         }
 
         private static Assembly CompileCSharpCode(MassageDataCSharpCode transform)
@@ -123,15 +126,6 @@ namespace Etl.Core.Transformation
             sb.Append("}}}");
 
             return CShapCompiler.Compile(sb.ToString());
-        }
-
-        private static string GetFirstNotEmpty(params string[] values)
-        {
-            foreach(var e in values)
-                if (!string.IsNullOrWhiteSpace(e))
-                    return e;
-
-            return null;
         }
     }
 }

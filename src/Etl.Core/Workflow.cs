@@ -62,7 +62,7 @@ namespace Etl.Core
 
             _transformInstance = transformInstance;
             _loaderInstances = loaderInstances;
-            _sequenceFlushBuffer = new SequenceFlushBuffer(OnTransformed);
+            _sequenceFlushBuffer = new SequenceFlushBuffer(OnTransformed, _events.OnError);
 
             scanner.Start(take, skip);
             scanner.Dispose();
@@ -112,7 +112,7 @@ namespace Etl.Core
                 }
                 catch (Exception ex)
                 {
-                    _events?.OnError?.Invoke($"{textLines}\n", ex);
+                    _events?.OnError?.Invoke((ex.InnerException ?? ex).Message, ex);
                 }
             }
 

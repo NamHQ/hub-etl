@@ -14,12 +14,12 @@ namespace Etl.Core.Transformation.Fields
     {
         public override TransformResult Transform(ExtractedRecord record)
         {
-            if (!record.ContainsKey(ParserField))
+            if (!record.ContainsKey(DataField))
                 return null;
 
-            var nestedRecords = record[ParserField] as ExtractedArray;
+            var nestedRecords = record[DataField] as ExtractedArray;
             if (nestedRecords == null)
-                throw new Exception($"Expected {typeof(ExtractedArray).Name} instead of {record[ParserField]?.GetType().Name}");
+                throw new Exception($"Expected {typeof(ExtractedArray).Name} instead of {record[DataField]?.GetType().Name}");
 
             var result = new TransformResult();
             foreach (var nextRecord in nestedRecords)

@@ -39,7 +39,7 @@ namespace Etl.Core.Transformation.Fields
 
         public override object Transform(ExtractedRecord record)
         {
-            record.TryGetValue(ParserField, out IExtractedInfo info);
+            record.TryGetValue(DataField, out IExtractedInfo info);
             string text = info == null ? null : record.Block.GetValue(info);
 
             object value = text;
@@ -52,36 +52,36 @@ namespace Etl.Core.Transformation.Fields
                     currentAction = action;
                     value = action.Execute(value, args);
                 }
-                catch
+                catch(Exception ex)
                 {
-                    throw Stop(record.Block, info, $"{currentAction.GetType().Name.Replace("ActionInst", "")}({value ?? "NULL"})", text);
+                    throw Stop(record.Block, info, currentAction.GetType().Name.Replace("ActionInst", ""), value, (ex.InnerException??ex).Message, text);
                 }
 
             if (Required && value == null)
-                throw Stop(record.Block, info, "Required", text);
+                throw Stop(record.Block, info, "Required", value, "Expected not empty value", text);
 
             return value;
         }
 
-        protected Exception Stop(TextBlock block, IExtractedInfo info, string reason, string rawValue)
+        protected Exception Stop(TextBlock block, IExtractedInfo info, string actionName, object value, string reason, string rawValue)
         {
             var sb = new StringBuilder();
-            sb.Append($"  Field: '{DataField}'");
-            sb.Append($", Invalid {reason}");
+            sb.Append($"  Field: '{Alias}'");
+            sb.Append($", Raw-Data: '{(info == null ? "[NOT FOUND]" : (rawValue ?? "NULL"))}'");
+            sb.Append($", Action: {actionName}('{value??"NULL"}')");
+            sb.Append($", Reason: {reason}");
 
+            var startIndex = 0;
             if (info != null)
             {
-                var startIndex = Math.Min(block.Count - 1, info.From.row);
+                startIndex = Math.Min(block.Count - 1, info.From.row);
                 var endIndex = Math.Min(block.Count - 1, info.To.row);
 
-                sb.Append($", Raw-Data: '{rawValue ?? "EMPTY"}'");
                 sb.Append($", From(R.{block[startIndex].Row}, {WriteColumn(info.From)})");
                 sb.Append($"-To(R.{block[endIndex].Row}, {WriteColumn(info.To)})");
             }
-            else
-                sb.Append(", Raw-Data: [NOT FOUND]");
 
-            sb.Append($", Text: {block[0].Text}");
+            sb.Append($", Text: {block[startIndex].Text}");
 
             return new(sb.ToString());
         }

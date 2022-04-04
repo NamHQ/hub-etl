@@ -34,7 +34,9 @@ namespace Etl.Core.Extraction
                 for (var i = 0; i <= lastIndex; i++)
                 {
                     var child = layout.Children[i];
-                    isLast = i == lastIndex && (child.Children == null || child.Children.Count == 0);
+                    isLast = i == lastIndex 
+                        && child.EndOffset == 0 && string.IsNullOrEmpty(child.End) 
+                        && (child.Children == null || child.Children.Count == 0);
                     _children.Add(new LayoutInst(child, layout.Direction, isLast, hierarchy + 1));
                 }
             }

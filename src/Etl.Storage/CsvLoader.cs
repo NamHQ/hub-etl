@@ -25,7 +25,7 @@ namespace Etl.Storage
             var selectedFields = new List<string>();
 
             if (defintion.Fields.Count == 0)
-                selectedFields.AddRange(args.Fields.Select(e => e.Field ?? e.ParserField));
+                selectedFields.AddRange(args.Fields.Select(e => e.Alias ?? e.DataField));
             else
                 selectedFields.AddRange(defintion.Fields);
 
@@ -37,8 +37,6 @@ namespace Etl.Storage
 
             for (var i = 0; i < selectedFields.Count; i++)
                 _fieldOrders[selectedFields[i]] = i;
-
-            
         }
 
         public override void OnProcessBatch(BatchResult result)
