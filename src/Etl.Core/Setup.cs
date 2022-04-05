@@ -22,9 +22,9 @@ namespace Etl.Core
             var etlSetting = configuration.GetSection("Etl").Get<EtlSetting>();
             services.AddSingleton(etlSetting);
 
-            var (fieldDefs, actionDefs) = services.AddTransformer(etlSetting.References.TransformFields, transformerAssemblies);
+            var (fieldDefs, actionDefs) = services.AddTransformer(etlSetting.Transformation?.References, transformerAssemblies);
 
-            var loaderDefs = services.AddLoaders(etlSetting.References.Loaders, loaderAssemblies);
+            var loaderDefs = services.AddLoaders(etlSetting.Load.References, loaderAssemblies);
 
             var etlFactory = new EtlFactory(etlSetting, fieldDefs, actionDefs, loaderDefs);
             services.AddSingleton(etlFactory);
@@ -98,7 +98,7 @@ namespace Etl.Core
         }
 
         private static List<Assembly> GetRefAssemblies(this IEnumerable<string> refDlls)
-            => refDlls.Select(e =>
+            => refDlls == null ? new() : refDlls.Select(e =>
             {
                 var fileInfo = new FileInfo(e);
                 if (!fileInfo.Exists)

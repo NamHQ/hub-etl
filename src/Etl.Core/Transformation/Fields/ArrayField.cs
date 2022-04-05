@@ -4,13 +4,15 @@ using System.Xml.Serialization;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public class ArrayField : RecordField<ArrayField, ArrayFieldInst>
+    public class ArrayField : RecordField
     {
         [XmlAttribute]
         public bool Flat { get; set; }
+
+        protected internal override Type InstanceType => typeof(ArrayFieldInst);
     }
 
-    public class ArrayFieldInst : RecordFieldInst<ArrayField, ArrayFieldInst>
+    public class ArrayFieldInst : RecordFieldInst
     {
         public override TransformResult Transform(ExtractedRecord record)
         {

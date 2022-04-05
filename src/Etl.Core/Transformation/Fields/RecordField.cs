@@ -5,24 +5,33 @@ using System.Collections.Generic;
 
 namespace Etl.Core.Transformation.Fields
 {
-    public abstract class RecordField<TDef, TInst> : TransformField<TInst>
-        where TDef : RecordField<TDef, TInst>
-        where TInst : RecordFieldInst<TDef, TInst>
+    public class RecordField : TransformField
     {
-        public virtual List<TransformField> Fields { get; set; } = new();
+        public List<TransformField> Fields { get; set; } = new();
 
         public HashSet<string> IgnoreParserFields { get; set; } = new();
+
+        protected internal override Type InstanceType => typeof(RecordFieldInst);
     }
 
-    public class RecordFieldInst<TDef, TInst> : TransformFieldInst<TDef, TransformResult>
-        where TDef : RecordField<TDef, TInst>
-        where TInst : RecordFieldInst<TDef, TInst>
+    public class RecordFieldInst : ITransformFieldInst
     {
         private readonly List<ITransformFieldInst> _fields = new();
         private ArrayFieldInst _flatArray;
 
-        public override void Initialize(TDef definition, IServiceProvider sp)
+        public string Alias { get; private set; }
+        public string DataField { get; private set; }
+        public bool Required { get; private set; }
+
+        void IInitialization.Initialize(object args, IServiceProvider sp)
+            => Initialize((RecordField)args, sp);
+
+        public void Initialize(RecordField definition, IServiceProvider sp)
         {
+            Alias = definition.Alias;
+            DataField = definition.DataField;
+            Required = definition.Required;
+
             foreach (var e in definition.Fields)
             {
                 var item = (ITransformFieldInst) sp.GetRequiredService(e.InstanceType);
@@ -41,7 +50,9 @@ namespace Etl.Core.Transformation.Fields
             }
         }
 
-        public override TransformResult Transform(ExtractedRecord record)
+        object ITransformFieldInst.Transform(ExtractedRecord record)
+            => Transform(record);
+        public virtual  TransformResult Transform(ExtractedRecord record)
         {
             IDictionary<string, object> newRecord = null;
             var result = _flatArray?.Transform(record) ?? new TransformResult();
@@ -70,9 +81,7 @@ namespace Etl.Core.Transformation.Fields
 
             return result;
         }
+
+        
     }
-
-    public class RecordField : RecordField<RecordField, RecordFieldInst> { }
-    public class RecordFieldInst : RecordFieldInst<RecordField, RecordFieldInst> { }
-
 }

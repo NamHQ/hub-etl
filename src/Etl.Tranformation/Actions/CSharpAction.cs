@@ -25,7 +25,7 @@ namespace Etl.Tranformation.Actions
                     sb.Append("}}}");
 
                     var (method, instance) = CShapCompiler.BuildExecutor(sb.ToString(), namespaceName, className, methodName);
-                    return (value, record) => method.Invoke(instance, new object[] { record, value });
+                    return (value, record) => method.Invoke(instance, new object[] { value, record});
                 }
             });
         }

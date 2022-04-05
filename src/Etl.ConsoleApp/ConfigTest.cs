@@ -1,5 +1,4 @@
 ﻿using Etl.Core.Extraction;
-using Etl.Core.Load;
 using Etl.Core.Transformation.Fields;
 using Etl.Storage;
 using Etl.Tranformation.Actions;
@@ -246,11 +245,9 @@ namespace Etl.ConsoleApp
 
                 Loaders =
                 {
-                    new ConsoleLoader {},
-
-                    new CsvLoader { OutPath="$path/$name.cards", Delimiter=",", Fields={
-                        "HashedAccountNumber", "AccountNumber"
-                    } },
+                    //new CsvLoader { OutPath="$path/$name.cards", Delimiter=",", Fields={
+                    //    "HashedAccountNumber", "AccountNumber"
+                    //} },
 
                     new CsvLoader { OutPath="$path/$name.trans", Delimiter="|", Fields = {
                         "RecordID", "FileSource", "ReportDate", "MerchantNumber", "TerminalNumber",
@@ -275,10 +272,10 @@ namespace Etl.ConsoleApp
                         }
                     },
 
-                    new MongoDbLoader
-                    {
-                        CollectionName = "Test"
-                    }
+                    //new MongoDbLoader
+                    //{
+                    //    CollectionName = "Test"
+                    //}
                 }
             };
         }

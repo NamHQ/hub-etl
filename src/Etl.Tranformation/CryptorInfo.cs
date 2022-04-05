@@ -22,8 +22,9 @@ namespace Etl.Tranformation
 
         public CryptorInfo(EtlSetting etlSetting)
         {
-            var hashFilePath = etlSetting?.Cryptor?.HashFile;
-            var cryptorFilePath = etlSetting?.Cryptor?.CryptorFile;
+            var cryptor = etlSetting.Transformation?.Cryptor;
+            var hashFilePath = cryptor?.HashFile;
+            var cryptorFilePath = cryptor?.CryptorFile;
 
             if (!string.IsNullOrEmpty(hashFilePath))
             {

@@ -13,13 +13,16 @@ namespace Etl.ConsoleApp
     {
         static void Main(string[] arguments)
         {
-            Console.WriteLine($"\n============================ START {DateTime.Now} ================================");
+            var args = BuildArgs(arguments);
+            if (string.IsNullOrEmpty(args.DataFile))
+                return;
+
+            var start = DateTime.Now;
+            Console.WriteLine($"\n============================ START {start} ================================");
 
             try
             {
                 var configuration = BuildConfiguration();
-                var args = BuildArgs(configuration, arguments);
-
                 var services = new ServiceCollection();
                 services.AddSingleton(configuration);
                 services.AddEtlTransformation(configuration);
@@ -29,32 +32,39 @@ namespace Etl.ConsoleApp
 
                 var sp = services.BuildServiceProvider();
 
-                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
 
-                sp.GetRequiredService<WorkflowBuilder>()
+                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/Delimiter-demo.xml");
+                //sp.GetRequiredService<EtlFactory>().Save(args.Config, "../../../../../Data/FDC_CRVD3071_CD028_2111161907.xml");
+                Console.Write($"Initializing... ");
+                
+                var builder = sp.GetRequiredService<WorkflowBuilder>()
                    .SetConfig(args.Config)
                    .SetConfig(args.ConfigFile)                  //Override args.Config
-                    //.AddLoaders(new ConsoleLoader())
+                                                                //.AddLoaders(new ConsoleLoader())
                    .Subcribe(events => events.ConsoleLog(
                         onScanned: args.OnScanned,
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
                         onTransformed: args.OnTransformed,
-                        onTransformedBatch: args.OnTransformedBatch))
-                   .Build(args.DataFile)
-                   .Start();
+                        onTransformedBatch: args.OnTransformedBatch));
+
+                var workflow = builder.Build(args.DataFile);
+
+                Console.WriteLine($"========{DateTime.Now.Subtract(start)}");
+
+                workflow.Start(args.Take, args.Skip);
             }
             catch (Exception ex)
             {
                 do
                 {
-                    Console.Error.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex);
                     ex = ex.InnerException;
                 }
                 while (ex != null);
             }
 
-            Console.WriteLine($"\n============================ END {DateTime.Now} ================================");
+            Console.WriteLine($"\n============================ END {DateTime.Now.Subtract(start)} ================================");
 
 #if DEBUG
             Console.ReadLine();
@@ -73,7 +83,7 @@ namespace Etl.ConsoleApp
             return configBuilder.Build();
         }
 
-        static AppArgument BuildArgs(IConfiguration appSetting, params string[] arguments)
+        static AppArgument BuildArgs(params string[] arguments)
         {
             AppArgument args = new();
             var dataFoler = "../../../../../Data";
@@ -82,14 +92,12 @@ namespace Etl.ConsoleApp
             args.Config = ConfigTest.CreateDelimiterDemoConfig();
             //EtlFactory.Save(args.Config, $"{dataFoler}/Delimiter-demo.xml");
             arguments = new string[] {
-                //$"{dataFoler}/FDC_CRVD3071_CD028_2111161907",
-                //"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",
+                //$"D:/Data/Parser/FDC_CRVD3071_CD028_2111161907",
+                //$"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",
 
                 $"{dataFoler}/Delimiter-demo",
                 //$"-config={dataFoler}/Delimiter-demo.xml",
 
-                //"-hash=D:/DLL/HashSaltKeys/salt.xml",
-                //"-cryptor=D:/DLL/keys.xml",
                 //"-skip=1",
                 //"-take=1",
                 //"-onScanned",
@@ -98,9 +106,6 @@ namespace Etl.ConsoleApp
                 //"-onTransformed",
                 "-onTransformedBatch"
             };
-
-            string hashFilePath = string.Empty;
-            string cryptorFilePath = string.Empty;
 
             if (arguments.Length == 0)
                 PrintSyntax();
@@ -115,8 +120,6 @@ namespace Etl.ConsoleApp
 
                     var _ =
                         SetConfig(e, "-config", val => args.ConfigFile = val)
-                        || SetConfig(e, "-hash", val => hashFilePath = val)
-                        || SetConfig(e, "-cryptor", val => cryptorFilePath = val)
                         || SetConfig(e, "-take", val => args.Take = int.Parse(val))
                         || SetConfig(e, "-skip", val => args.Skip = int.Parse(val))
                         || SetConfig(e, "-onScanned", _ => args.OnScanned = true)
@@ -131,11 +134,9 @@ namespace Etl.ConsoleApp
 
         private static void PrintSyntax()
         {
-            Console.WriteLine(" Syntax: MPParser dataFile [-Options]");
+            Console.WriteLine(" Syntax: etl dataFile [-Options]");
             Console.WriteLine(" Options:");
             Console.WriteLine("     -config=(configFile.xml),");
-            Console.WriteLine("     -hash=(salt.xml),");
-            Console.WriteLine("     -cryptor=(key.xml),");
             Console.WriteLine("     -take=(number)");
             Console.WriteLine("     -skip=(number)");
             Console.WriteLine("     -onScanned");

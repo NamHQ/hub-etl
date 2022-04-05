@@ -2,12 +2,12 @@
 {
     public class EtlSetting
     {
-        public ConfigFilesSetting ConfigFiles = new();
-
-        public ReferencesSetting References { get; set; } = new();
+        public ConfigFilesSetting ConfigFiles { get; set; } = new();
 
         public ExtractionSetting Extraction { get; set; } = new();
 
-        public CryptorSetting Cryptor { get; set; } = new();
+        public TransformationSetting Transformation { get; set; } = new();
+
+        public LoadSetting Load { get; set; } = new();
     }
 }

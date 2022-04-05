@@ -107,6 +107,7 @@ namespace Etl.Core
                     Type = e
                 });
             attrOverrides.Add(typeof(Transformer), nameof(Transformer.Fields), attrs);
+            attrOverrides.Add(typeof(RecordField), nameof(RecordField.Fields), attrs);
         }
 
         private static void AddActionDefsOverrides(XmlAttributeOverrides attrOverrides, List<Type> actionDefs)
