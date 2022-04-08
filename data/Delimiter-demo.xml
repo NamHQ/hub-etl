@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="1" FlushBatch="2">
+<Etl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ScanBatch="10" FlushBatch="2">
 	<Extraction LayoutStartOffset="3">
 		<Comments />
-		<Layout Direction="Column" StartOffset="0" MaxStart="0" EndOffset="1" Repeat="true">
-			<Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" DataField="F1" Repeat="false" />
-			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F2" Repeat="false" />
-			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F3" Repeat="false" />
-			<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F4" Repeat="false" />
-			<Layout Direction="Row" StartOffset="1" MaxStart="0" EndOffset="0" DataField="F5" Repeat="false" />
+		<Layout Direction="Row" Start="\A---main" StartOffset="0" MaxStart="0" End="\A---main" EndOffset="0" Repeat="true">
+			<Layout Direction="Column" StartOffset="1" MaxStart="0" EndOffset="0" Repeat="false">
+				<Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" DataField="F1" Repeat="false" />
+				<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F2" Repeat="false" />
+				<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F3" Repeat="false" />
+			</Layout>
+			<Layout Direction="Row" Start="---children" StartOffset="0" MaxStart="0" EndOffset="0" Repeat="false">
+				<Layout Direction="Column" StartOffset="1" MaxStart="0" EndOffset="0" DataField="Children" Repeat="true">
+					<Layout Direction="Row" StartOffset="0" MaxStart="0" End="\|" EndOffset="0" DataField="F4" Repeat="false" />
+					<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F5" Repeat="false" />
+					<Layout Direction="Row" StartOffset="1" MaxStart="0" End="\|" EndOffset="0" DataField="F6" Repeat="false" />
+				</Layout>
+			</Layout>
 		</Layout>
 	</Extraction>
 	<Transformation>
 		<Fields>
-			<Integer Field="F3" Required="true">
+			<Integer Alias="F3" DataField="F3" Required="false">
 				<Actions />
 			</Integer>
-			<PipeLine Field="F4" Required="false">
-				<Actions>
-					<String Order="0" />
-				</Actions>
-			</PipeLine>
+			<Array Alias="Children" DataField="Children" Required="false" Flat="true">
+				<Fields>
+					<String Alias="F5" DataField="F5" Required="false">
+						<Actions>
+							<CheckPattern Order="0" Pattern="m" />
+						</Actions>
+					</String>
+				</Fields>
+				<IgnoreParserFields />
+			</Array>
 		</Fields>
 		<Massage />
 	</Transformation>

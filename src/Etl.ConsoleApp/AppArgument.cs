@@ -13,6 +13,7 @@
             public bool OnExtracted;
             public bool OnTransformed;
             public bool OnTransformedBatch;
+            public int OnStatusIntervalSeconds;
 
             public Core.Etl Config;
         }

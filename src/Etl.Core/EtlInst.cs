@@ -30,7 +30,7 @@ namespace Etl.Core
             Scanner.Scanner scaner,
             Func<ExtractedRecord, TransformResult> transformInstance,
             List<ILoaderInst> loaders)
-            Start(string dataFile, Func<StreamReader> getStreamReader, IServiceProvider sp, List<Loader> extraLoaders, Action<List<TextLine>> flush)
+            Start(string dataFile, Func<StreamReader> getStreamReader, IServiceProvider sp, List<Loader> extraLoaders, Action<List<TextLine>, float> flush)
         {
             
 
@@ -40,7 +40,7 @@ namespace Etl.Core
                 CreateLoaderInstances(dataFile, sp, extraLoaders));
         }
 
-        public ExtractedRecord Extract(List<TextLine> textLines, ICompilerEvent events)
+        public ExtractedRecord Extract(List<TextLine> textLines, IEtlEvent events)
             => _extractor.Execute(textLines, events);
 
         public List<IDictionary<string, object>> ApplyMassage(List<IDictionary<string, object>> batch)

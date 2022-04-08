@@ -15,14 +15,14 @@ namespace Etl.Core.Scanner
         private int _currentLine = 0;
         private bool _disposedValue;
 
-        private readonly Action<List<TextLine>> _onFlush;
+        private readonly Action<List<TextLine>, float> _onFlush;
 
         public Scanner(
             StreamReader streamReader,
             (Regex regex, int offset) startLayout,
             (Regex regex, int offset) startRecord,
             (Regex regex, int offset) endRecord,
-            Action<List<TextLine>> onFlush)
+            Action<List<TextLine>, float> onFlush)
         {
             _streamReader = streamReader;
             _startLayout = startLayout;
@@ -52,11 +52,12 @@ namespace Etl.Core.Scanner
                     if (take != null && --take < 0)
                         break;
 
-                    _onFlush?.Invoke(items);
+                    var progress = _streamReader.BaseStream.Position * 100 / _streamReader.BaseStream.Length;
+                    _onFlush?.Invoke(items, progress);
                 }
             }
 
-            _onFlush?.Invoke(null);
+            _onFlush?.Invoke(null, 100);
         }
 
         private static void MoveTo(Regex regex, int offset, IEnumerator<TextLine> reader)

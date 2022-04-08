@@ -9,17 +9,17 @@ namespace Etl.Core.Load
     {
         private readonly Queue<(TransformResult result, bool isLast)> _buffer = new();
         private readonly Action<TransformResult, bool> _onFlush;
-        private readonly Action<string, Exception> _onError;
+        private readonly Action<TransformResult, (string message, Exception ex)> _onCompleted;
         private bool _isProcessing = false;
         private Task _executor;
 
         public int Count
             => _buffer.Count;
 
-        public SequenceFlushBuffer(Action<TransformResult, bool> onFlush, Action<string, Exception> onError)
+        public SequenceFlushBuffer(Action<TransformResult, bool> onFlush, Action<TransformResult, (string message, Exception ex)> onCompleted)
         {
             _onFlush = onFlush;
-            _onError = onError;
+            _onCompleted = onCompleted;
         }
 
         public void Push(TransformResult result, bool isLast)
@@ -55,10 +55,11 @@ namespace Etl.Core.Load
                 try
                 {
                     _onFlush(item.result, item.isLast);
+                    _onCompleted(item.result, default);
                 }
                 catch (Exception ex)
                 {
-                    _onError($"Loader error: {(ex.InnerException??ex).Message}", ex);
+                    _onCompleted(item.result, ($"Loader error: {(ex.InnerException ?? ex).Message}", ex));
                 }
             }
         }

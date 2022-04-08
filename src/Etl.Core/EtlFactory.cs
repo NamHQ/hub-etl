@@ -1,6 +1,7 @@
 ﻿using Etl.Core.Settings;
 using Etl.Core.Transformation;
 using Etl.Core.Transformation.Fields;
+using Etl.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,6 +39,7 @@ namespace Etl.Core
         public void Save(Etl config, string filePath)
         {
             var serializer = new XmlSerializer(typeof(Etl), _attributeOverrides);
+            filePath = FilePath.GetFullPath(filePath);
             using var stream = new StreamWriter(filePath);
 
             serializer.Serialize(stream, config);
@@ -52,6 +54,7 @@ namespace Etl.Core
                     return GetFrom(Path.Combine(_setting.Folder, configFile));
             }
 
+            dataFilePath = FilePath.GetFullPath(dataFilePath);
             var fileInfo = new FileInfo(dataFilePath);
             dataFilePath = $"{fileInfo.Directory}/{Path.GetFileNameWithoutExtension(fileInfo.Name)}.xml";
 

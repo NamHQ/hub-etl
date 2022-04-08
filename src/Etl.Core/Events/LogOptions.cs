@@ -13,5 +13,7 @@
         public bool OnTransformedBatch { get; set; }
 
         public bool OnError { get; set; } 
+
+        public int OnStatusIntervalSeconds { get; set; }
     }
 }

@@ -77,7 +77,7 @@ namespace Etl.Core.Extraction
             return next;
         }
 
-        public ExtractedRecord ParseOneRecord(List<TextLine> textLines, ICompilerEvent events)
+        public ExtractedRecord ParseOneRecord(List<TextLine> textLines, IEtlEvent events)
         {
             var start = (0,0);
             var end = (textLines.Count, int.MaxValue);
@@ -91,7 +91,7 @@ namespace Etl.Core.Extraction
         private (int row, int column) DetectChildrenLayouts(
             (int row, int column) start,
             (int row, int column) end,
-            ICompilerEvent events,
+            IEtlEvent events,
             ExtractedRecord result)
         {
             var line = start.row;
@@ -118,7 +118,7 @@ namespace Etl.Core.Extraction
         private (int row, int column) DetectDataField(
             (int row, int column) start,
             (int row, int column) end,
-            ICompilerEvent events,
+            IEtlEvent events,
             ExtractedRecord result)
         {
             var block = result.Block;

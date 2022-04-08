@@ -9,16 +9,17 @@ namespace Etl.Core.Load
         public List<IDictionary<string, object>> Batch;
         public IEnumerable<string> Errors;
         public DateTime StartAt;
-        public int TotalRecords;
-        public int TotalValidRecords;
-        public int TotalErrors;
+        public int TotalTransformSuccess;
+        public int TotalTransformErrors;
         public bool IsLast;
+
+        public int TotalRecords => TotalTransformSuccess + TotalTransformErrors;
 
         public override string ToString()
         {
             var t = DateTime.Now.Subtract(StartAt);
 
-            var sb = new StringBuilder($"total: {TotalRecords}, valid: {TotalValidRecords}, errors: {TotalErrors}, spend: {t}, batch {Batch.Count}");
+            var sb = new StringBuilder($"total: {TotalRecords}, valid: {TotalTransformSuccess}, errors: {TotalTransformErrors}, spend: {t}, batch {Batch.Count}");
 
             if (Errors != null)
             {

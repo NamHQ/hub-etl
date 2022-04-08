@@ -1,4 +1,5 @@
 ﻿using Etl.Core.Load;
+using Etl.Core.Utils;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -21,7 +22,7 @@ namespace Etl.Storage
 
         protected override void Initalize(TDef definition, LoaderArgs args)
         {
-            var file = new FileInfo(args.InputFile);
+            var file = new FileInfo(FilePath.GetFullPath(args.InputFile));
             var path = definition.OutPath.Replace("$path", file.DirectoryName)
                 .Replace("$name", file.Name);
 

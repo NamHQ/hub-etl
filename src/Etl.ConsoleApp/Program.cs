@@ -27,7 +27,7 @@ namespace Etl.ConsoleApp
                 services.AddSingleton(configuration);
                 services.AddEtlTransformation(configuration);
                 services.AddEtl(configuration,
-                    new List<Assembly> { typeof(Core.Setup).Assembly, typeof(Tranformation.Setup).Assembly },
+                    new List<Assembly> { typeof(Tranformation.Setup).Assembly },
                     new List<Assembly> { typeof(CsvLoader).Assembly });
 
                 var sp = services.BuildServiceProvider();
@@ -46,7 +46,8 @@ namespace Etl.ConsoleApp
                         onExtracting: args.OnExtracting,
                         onExtracted: args.OnExtracted,
                         onTransformed: args.OnTransformed,
-                        onTransformedBatch: args.OnTransformedBatch));
+                        onTransformedBatch: args.OnTransformedBatch,
+                        OnStatusIntervalSeconds: args.OnStatusIntervalSeconds));
 
                 var workflow = builder.Build(args.DataFile);
 
@@ -96,7 +97,7 @@ namespace Etl.ConsoleApp
                 //$"-config={dataFoler}/FDC_CRVD3071_CD028_2111161907.xml",
 
                 $"{dataFoler}/Delimiter-demo",
-                //$"-config={dataFoler}/Delimiter-demo.xml",
+                $"-config={dataFoler}/Delimiter-demo.xml",
 
                 //"-skip=1",
                 //"-take=1",
@@ -104,7 +105,8 @@ namespace Etl.ConsoleApp
                 //"-onExtracting",
                 //"-onExtracted",
                 //"-onTransformed",
-                "-onTransformedBatch"
+                //"-onTransformedBatch",
+                "-onStatusIntervalSeconds=1"
             };
 
             if (arguments.Length == 0)
@@ -126,7 +128,8 @@ namespace Etl.ConsoleApp
                         || SetConfig(e, "-onExtracting", _ => args.OnExtracting = true)
                         || SetConfig(e, "-onExtracted", _ => args.OnExtracted = true)
                         || SetConfig(e, "-onTransformed", _ => args.OnTransformed = true)
-                        || SetConfig(e, "-onTransformedBatch", _ => args.OnTransformedBatch = true);
+                        || SetConfig(e, "-onTransformedBatch", _ => args.OnTransformedBatch = true)
+                        || SetConfig(e, "-onStatusIntervalSeconds", val => args.OnStatusIntervalSeconds= int.Parse(val));
                 }
 
             return args;
@@ -144,6 +147,7 @@ namespace Etl.ConsoleApp
             Console.WriteLine("     -onExtracted");
             Console.WriteLine("     -onTransformed");
             Console.WriteLine("     -onTransformedBatch");
+            Console.WriteLine("     -onStatusIntervalSeconds");
         }
 
         private static bool SetConfig(string configValue, string key, Action<string> setValue)

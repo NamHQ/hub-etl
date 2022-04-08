@@ -28,15 +28,15 @@ namespace Etl.Core.Extraction
             _layoutComments = definition.Comments?.Select(e => new LayoutInst(e)).ToList();
         }
 
-        public Scanner.Scanner CreateScanner(Func<StreamReader> getStreamReader, Action<List<TextLine>> flush)
+        public Scanner.Scanner CreateScanner(Func<StreamReader> getStreamReader, Action<List<TextLine>, float> flush)
         {
             var proxy = _layoutComments == null || _layoutComments.Count == 0
                 ? flush
-                : textLines =>
+                : (textLines, percentage) =>
                 {
                     if (textLines != null)
                         RemoveComments(textLines);
-                    flush(textLines);
+                    flush(textLines, percentage);
                 };
 
             return new(getStreamReader(), _startLayout, _startRecord, _endRecord, proxy);
@@ -57,7 +57,7 @@ namespace Etl.Core.Extraction
             }
         }
 
-        public ExtractedRecord Execute(List<TextLine> textLines, ICompilerEvent events)
+        public ExtractedRecord Execute(List<TextLine> textLines, IEtlEvent events)
             => _layout.ParseOneRecord(textLines, events);
     }
 }

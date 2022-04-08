@@ -12,10 +12,10 @@ namespace Etl.Core
         private readonly IServiceProvider _sp;
         private readonly EtlSetting _etlSetting;
         private readonly IEtlFactory _etlFactory;
-        
-        private ICompilerEvent _events;
+        private readonly List<Loader> _extraLoaders = new();
+
+        private IEtlEvent _events;
         private (Etl definition, EtlInst instance) _etl;
-        private List<Loader> _extraLoaders = new();
 
         public WorkflowBuilder(EtlSetting setting, IEtlFactory etlFactory, IServiceProvider sp)
         {
@@ -25,9 +25,9 @@ namespace Etl.Core
             _etlFactory = etlFactory;
         }
 
-        public WorkflowBuilder Subcribe(Action<CompilerEvent> subscribe)
+        public WorkflowBuilder Subcribe(Action<IEtlEvent> subscribe)
         {
-            var e = new CompilerEvent();
+            var e = new EtlEvent();
             subscribe(e);
 
             _events = e;

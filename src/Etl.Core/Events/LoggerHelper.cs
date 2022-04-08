@@ -10,7 +10,7 @@ namespace Etl.Core.Events
 {
     public static class LoggerHelper
     {
-        public static void ApplyLog(CompilerEvent events, ILogWriter writer, LogOptions options)
+        public static void ApplyLog(IEtlEvent events, ILogWriter writer, LogOptions options)
         {
             if (options.OnScanned)
                 events.OnScanned = e => OnScanned(writer.Debug, e);
@@ -29,6 +29,9 @@ namespace Etl.Core.Events
 
             if (options.OnError)
                 events.OnError = (message, e) => OnError(writer.Error, message, e);
+
+            if (options.OnStatusIntervalSeconds > 0)
+                events.OnStatusInterval = (options.OnStatusIntervalSeconds, status => OnStatus(writer.Debug, status));
         }
 
         public static void OnStart(Action<string> writer, int count)
@@ -153,7 +156,8 @@ namespace Etl.Core.Events
         public static void OnError(Action<string, Exception> writer, string message, Exception exception)
             => writer(message, exception);
 
-        
+        private static void OnStatus(Action<string> writter, IEtlStatus status)
+            => writter($"STATUS: { status}");
 
         public static string BuildMessage(string message, IDictionary<string, object> record)
         {

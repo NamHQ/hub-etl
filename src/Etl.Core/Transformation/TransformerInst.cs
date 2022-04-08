@@ -84,9 +84,14 @@ namespace Etl.Core.Transformation
 
         private static List<TransformField> MergeFields(List<TransformField> allTransformFields, List<TransformField> allExtractedFields, HashSet<string> ignoreParserFields)
         {
-            var items = new List<TransformField> ();
+            var items = new List<TransformField>();
 
-            var dictionary = allTransformFields.ToDictionary(e => e.DataField);
+            var dictionary = new Dictionary<string, TransformField>();
+            foreach (var e in allTransformFields)
+                if (string.IsNullOrEmpty(e.DataField))
+                    throw new Exception($"{nameof(TransformField)} expects {nameof(TransformField.Alias)} or {nameof(TransformField.DataField)}");
+                else
+                    dictionary[e.DataField] = e;
 
             foreach (var extractedField in allExtractedFields.Where(x => !ignoreParserFields.Contains(x.DataField)))
             {
@@ -99,7 +104,7 @@ namespace Etl.Core.Transformation
                 {
                     if (transformField is not ArrayField transfromArray)
                         throw new Exception($"Extract array field {extractedArray.DataField} does not match defined field {transformField.DataField} {transformField.GetType().Name}");
-                    
+
                     var nestedItems = MergeFields(transfromArray.Fields, extractedArray.Fields, transfromArray.IgnoreParserFields);
 
                     if (transfromArray.Flat)

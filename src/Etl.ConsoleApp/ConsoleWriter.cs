@@ -1,4 +1,5 @@
-﻿using Etl.Core.Events;
+﻿using Etl.Core;
+using Etl.Core.Events;
 using System;
 
 namespace Etl.ConsoleApp
@@ -15,11 +16,12 @@ namespace Etl.ConsoleApp
     static class LogWriterHelper
     {
         public static void ConsoleLog(
-            this CompilerEvent events,
+            this IEtlEvent events,
             bool onScanned = true, 
             bool onExtracting = true, bool onExtracted = true, 
             bool onTransformed = true, bool onTransformedBatch = true,
-            bool onError = true)
+            bool onError = true,
+            int OnStatusIntervalSeconds = 0)
         {
             var isDebug = onScanned || onExtracting || onExtracted || onTransformed || onTransformedBatch;
 
@@ -31,7 +33,8 @@ namespace Etl.ConsoleApp
                 OnExtracted = isDebug && onExtracted,
                 OnTransformed = isDebug && onTransformed,
                 OnTransformedBatch = isDebug && onTransformedBatch,
-                OnError = onError
+                OnError = onError,
+                OnStatusIntervalSeconds = OnStatusIntervalSeconds
             });
         }
     }

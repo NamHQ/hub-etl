@@ -39,7 +39,8 @@ namespace Etl.Core
             IEnumerable<string> refDlls,
             IEnumerable<Assembly> transformerAssemblies)
         {
-            var assemblies = GetRefAssemblies(refDlls);
+            var assemblies = new List<Assembly> { typeof(Setup).Assembly };
+            assemblies.AddRange(GetRefAssemblies(refDlls));
             if (transformerAssemblies != null)
                 assemblies.AddRange(transformerAssemblies);
 
