@@ -4,14 +4,6 @@
 		<TargetFramework>net6.0</TargetFramework>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <OutputPath>D:\SourceCode\VWParser\src\Etl.ConsoleApp\bin\Debug</OutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <OutputPath>D:\Data\Parser\</OutputPath>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="MongoDB.Driver" Version="2.13.2" />
 		<ProjectReference Include="..\Etl.Core\Etl.Core.csproj" />

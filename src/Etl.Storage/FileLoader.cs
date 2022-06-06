@@ -10,7 +10,7 @@ namespace Etl.Storage
         where TInst : FileLoaderInst<TDef, TInst>
     {
         [XmlAttribute]
-        public string OutPath { get; set; } = "$path/$name.result";
+        public virtual string OutPath { get; set; } = "$path/$name.result";
     }
 
     public abstract class FileLoaderInst<TDef, TInst> : LoaderInst<TDef>

@@ -51,7 +51,7 @@ namespace Etl.Core
             return this;
         }
 
-        public WorkflowBuilder AddLoaders(params Loader[] loaders)
+        public WorkflowBuilder AddLoaders(IEnumerable<Loader> loaders)
         {
             _extraLoaders.AddRange(loaders);
 
